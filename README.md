@@ -2,32 +2,32 @@
 
 ## {{project_description}}
 
-![PyPI - License](https://img.shields.io/pypi/l/{{pypi_package_name}})
-[![CI/CD Pipeline](https://github.com/{{github_username}}/{{repo_name}}/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/{{github_username}}/{{repo_name}}/actions/workflows/ci-cd.yml)
-[![codecov](https://codecov.io/github/{{github_username}}/{{repo_name}}/graph/badge.svg?token={{codecov_token}})](https://codecov.io/github/{{github_username}}/{{repo_name}})
-![PyPI - Version](https://img.shields.io/pypi/v/{{pypi_package_name}})
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/{{pypi_package_name}})
+![PyPI - License](https://img.shields.io/pypi/l/spatial-attention)
+[![CI/CD Pipeline](https://github.com/rhoadesScholar/spatial-attention/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/rhoadesScholar/spatial-attention/actions/workflows/ci-cd.yml)
+[![codecov](https://codecov.io/github/rhoadesScholar/spatial-attention/graph/badge.svg?token=)](https://codecov.io/github/rhoadesScholar/spatial-attention)
+![PyPI - Version](https://img.shields.io/pypi/v/spatial-attention)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/spatial-attention)
 
-{{long_description}}
+Inspired by the spatial grouping layer in Native Segmentation Vision Transformers (https://arxiv.org/abs/2505.16993), implemented in PyTorch with a modified rotary position embedding generalized to N-dimensions and incorporating real-world pixel spacing.
 
 ## Installation
 
 ### From PyPI
 
 ```bash
-pip install {{pypi_package_name}}
+pip install spatial-attention
 ```
 
 ### From source
 
 ```bash
-pip install git+https://github.com/{{github_username}}/{{repo_name}}.git
+pip install git+https://github.com/rhoadesScholar/spatial-attention.git
 ```
 
 ## Usage
 
 ```python
-import {{package_name}}
+import spatial_attention
 
 # Example usage
 # TODO: Add your usage examples here
@@ -39,8 +39,8 @@ import {{package_name}}
 
 ```bash
 # Clone the repository
-git clone https://github.com/{{github_username}}/{{repo_name}}.git
-cd {{repo_name}}
+git clone https://github.com/rhoadesScholar/spatial-attention.git
+cd spatial-attention
 
 # Install in development mode with all dependencies
 make dev-setup
@@ -87,7 +87,7 @@ make check-all
 
 ## License
 
-{{license_name}}. See [LICENSE](LICENSE) for details.
+BSD 3-Clause License. See [LICENSE](LICENSE) for details.
 
 ## Citation
 

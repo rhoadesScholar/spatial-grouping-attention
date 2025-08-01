@@ -17,7 +17,7 @@ This is a comprehensive template for creating Python packages with modern best p
 ## 📁 Template Structure
 
 ```
-{{repo_name}}/
+spatial-attention/
 ├── .github/
 │   └── workflows/
 │       └── ci-cd.yml              # GitHub Actions workflow
@@ -25,11 +25,11 @@ This is a comprehensive template for creating Python packages with modern best p
 │   ├── update-version.py          # Auto-version update hook
 │   └── README.md                  # Pre-commit hooks documentation
 ├── src/
-│   └── {{package_name}}/
+│   └── spatial_attention/
 │       ├── __init__.py            # Package initialization
 │       └── core.py                # Main package code
 ├── tests/
-│   └── test_{{package_name}}.py   # Test suite
+│   └── test_spatial_attention.py   # Test suite
 ├── docs/
 │   └── README.md                  # Documentation
 ├── .gitignore                     # Git ignore patterns
@@ -56,37 +56,37 @@ Search and replace the following placeholders throughout the codebase:
 
 | Placeholder | Description | Example |
 |-------------|-------------|---------|
-| `{{repo_name}}` | Repository name | `my-awesome-package` |
-| `{{package_name}}` | Python package name (src/ folder) | `my_awesome_package` |
-| `{{pypi_package_name}}` | PyPI package name | `my-awesome-package` |
-| `{{description}}` | Short project description | `A awesome Python package` |
-| `{{long_description}}` | Detailed project description | `This package provides...` |
-| `{{author_name}}` | Your full name | `John Doe` |
-| `{{author_first_name}}` | Your first name | `John` |
-| `{{author_last_name}}` | Your last name | `Doe` |
-| `{{author_email}}` | Your email | `john@example.com` |
-| `{{github_username}}` | Your GitHub username | `johndoe` |
-| `{{license_name}}` | License name | `BSD 3-Clause License` |
-| `{{license_id}}` | SPDX license identifier | `BSD-3-Clause` |
-| `{{license_classifier}}` | PyPI license classifier | `BSD License` |
-| `{{main_class}}` | Main class name | `MyAwesomeClass` |
-| `{{year}}` | Current year | `2025` |
+| `spatial-attention` | Repository name | `my-awesome-package` |
+| `spatial_attention` | Python package name (src/ folder) | `my_awesome_package` |
+| `spatial-attention` | PyPI package name | `my-awesome-package` |
+| `Spatial grouping attention using Rotary Spatial Embeddings (RoSE)` | Short project description | `A awesome Python package` |
+| `Inspired by the spatial grouping layer in Native Segmentation Vision Transformers (https://arxiv.org/abs/2505.16993), implemented in PyTorch with a modified rotary position embedding generalized to N-dimensions and incorporating real-world pixel spacing.` | Detailed project description | `This package provides...` |
+| `Jeff Rhoades` | Your full name | `John Doe` |
+| `Jeff` | Your first name | `John` |
+| `Rhoades` | Your last name | `Doe` |
+| `rhoadesj@hhmi.org` | Your email | `john@example.com` |
+| `rhoadesScholar` | Your GitHub username | `johndoe` |
+| `BSD 3-Clause License` | License name | `BSD 3-Clause License` |
+| `BSD-3-Clause` | SPDX license identifier | `BSD-3-Clause` |
+| `BSD License` | PyPI license classifier | `BSD License` |
+| `SpatialAttention` | Main class name | `MyAwesomeClass` |
+| `2025` | Current year | `2025` |
 
 #### Optional Placeholders
 
 | Placeholder | Description | Default/Example |
 |-------------|-------------|-----------------|
-| `{{keywords}}` | PyPI keywords | `["python", "package"]` |
-| `{{orcid_id}}` | Your ORCID ID | `https://orcid.org/0000-0000-0000-0000` |
-| `{{codecov_token}}` | Codecov token | `YOUR_TOKEN_HERE` |
-| `{{citation_key}}` | BibTeX citation key | `doe2025awesome` |
-| `{{version}}` | Initial version | `0.1.0` |
-| `{{release_date}}` | Release date | `2025-01-01` |
+| `"attention", "transformer", "rotary spatial embedding", "segmentation"` | PyPI keywords | `["python", "package"]` |
+| `0000-0001-5077-2533` | Your ORCID ID | `https://orcid.org/0000-0000-0000-0000` |
+| `` | Codecov token | `YOUR_TOKEN_HERE` |
+| `rhoadesScholar2025spatial_attention` | BibTeX citation key | `doe2025awesome` |
+| `0.1.0` | Initial version | `0.1.0` |
+| `2025-07-31` | Release date | `2025-01-01` |
 
 ### 3. Rename directories and files
 
-1. Rename `src/{{package_name}}/` to `src/your_actual_package_name/`
-2. Rename `tests/test_{{package_name}}.py` to `tests/test_your_package.py`
+1. Rename `src/spatial_attention/` to `src/your_actual_package_name/`
+2. Rename `tests/test_spatial_attention.py` to `tests/test_your_package.py`
 
 ### 4. Update dependencies
 
@@ -195,7 +195,7 @@ FROM python:3.11-slim
 WORKDIR /app
 COPY . .
 RUN pip install -e .
-CMD ["python", "-m", "{{package_name}}"]
+CMD ["python", "-m", "spatial_attention"]
 ```
 
 ### Advanced Testing

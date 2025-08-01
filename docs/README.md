@@ -1,10 +1,10 @@
-# {{repo_name}} Documentation
+# spatial-attention Documentation
 
-Welcome to the {{repo_name}} documentation!
+Welcome to the spatial-attention documentation!
 
 ## Overview
 
-{{description}}
+Spatial grouping attention using Rotary Spatial Embeddings (RoSE)
 
 ## Table of Contents
 
@@ -16,21 +16,21 @@ Welcome to the {{repo_name}} documentation!
 
 ## Getting Started
 
-{{long_description}}
+Inspired by the spatial grouping layer in Native Segmentation Vision Transformers (https://arxiv.org/abs/2505.16993), implemented in PyTorch with a modified rotary position embedding generalized to N-dimensions and incorporating real-world pixel spacing.
 
 ### Installation
 
 ```bash
-pip install {{pypi_package_name}}
+pip install spatial-attention
 ```
 
 ### Quick Example
 
 ```python
-import {{package_name}}
+import spatial_attention
 
 # Your example code here
-obj = {{package_name}}.{{main_class}}(param1="example")
+obj = spatial_attention.SpatialAttention(param1="example")
 result = obj.process()
 print(result)
 ```
@@ -39,10 +39,10 @@ print(result)
 
 If you encounter any issues or have questions, please:
 
-1. Check the [documentation](https://github.com/{{github_username}}/{{repo_name}})
-2. Search [existing issues](https://github.com/{{github_username}}/{{repo_name}}/issues)
-3. Create a [new issue](https://github.com/{{github_username}}/{{repo_name}}/issues/new)
+1. Check the [documentation](https://github.com/rhoadesScholar/spatial-attention)
+2. Search [existing issues](https://github.com/rhoadesScholar/spatial-attention/issues)
+3. Create a [new issue](https://github.com/rhoadesScholar/spatial-attention/issues/new)
 
 ## License
 
-This project is licensed under the {{license_name}} License - see the [LICENSE](../LICENSE) file for details.
+This project is licensed under the BSD 3-Clause License License - see the [LICENSE](../LICENSE) file for details.
