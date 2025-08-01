@@ -1,6 +1,10 @@
-"""spatial_attention: Spatial grouping attention using Rotary Spatial Embeddings (RoSE)
+"""spatial_attention: Spatial grouping attention
+using Rotary Spatial Embeddings (RoSE)
 
-Inspired by the spatial grouping layer in Native Segmentation Vision Transformers (https://arxiv.org/abs/2505.16993), implemented in PyTorch with a modified rotary position embedding generalized to N-dimensions and incorporating real-world pixel spacing.
+Inspired by the spatial grouping layer in Native Segmentation
+Vision Transformers (https://arxiv.org/abs/2505.16993),
+implemented in PyTorch with a modified rotary position embedding
+generalized to N-dimensions and incorporating real-world pixel spacing.
 """
 
 from importlib.metadata import PackageNotFoundError, version
@@ -13,7 +17,7 @@ except PackageNotFoundError:
 __author__ = "Jeff Rhoades"
 __email__ = "rhoadesj@hhmi.org"
 
-from .core import SpatialAttention
+from .spatial_attention import SpatialAttention
 
 __all__ = [
     "__version__",
