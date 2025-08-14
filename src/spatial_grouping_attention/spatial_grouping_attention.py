@@ -9,7 +9,7 @@ from .mlp import MLP
 from .utils import to_tuple
 
 
-class SpatialGroupingAttention:
+class SpatialGroupingAttention(torch.nn.Module):
     """Base class for spatial grouping attention. Modify `attn` method in subclasses.
 
     Args:
@@ -56,6 +56,7 @@ class SpatialGroupingAttention:
         init_jitter_std: float = 0.02,
         spacing: Optional[float | Sequence[float]] = None,
     ) -> None:
+        super().__init__()
         conv = {
             1: torch.nn.Conv1d,
             2: torch.nn.Conv2d,
@@ -137,13 +138,56 @@ class SpatialGroupingAttention:
             torch.zeros((1, feature_dims)), requires_grad=True
         )
 
+    def _calculate_strided_grid_shape(
+        self, input_grid_shape: Tuple[int, ...]
+    ) -> Tuple[int, ...]:
+        """Calculate output grid shape after strided convolution.
+
+        Args:
+            input_grid_shape: Shape of input grid
+
+        Returns:
+            Shape of output grid after applying strided convolution
+        """
+        # Cast to tuples of ints (they are after to_tuple with dtype_caster=int)
+        stride = tuple(int(s) for s in self.stride)  # type: ignore
+        kernel_size = tuple(int(k) for k in self.kernel_size)  # type: ignore
+
+        if all(s == 1 for s in stride):
+            # No striding, same shape
+            return input_grid_shape
+
+        output_shape = []
+        for input_size, s, k in zip(input_grid_shape, stride, kernel_size):
+            # Standard formula for conv output size
+            padding = (k - 1) // 2  # Same as we used in __init__
+            output_size = (input_size + 2 * padding - k) // s + 1
+            output_shape.append(output_size)
+
+        return tuple(output_shape)
+
+    def _calculate_strided_spacing(
+        self, input_spacing: Tuple[float, ...]
+    ) -> Tuple[float, ...]:
+        """Calculate output spacing after strided convolution.
+
+        Args:
+            input_spacing: Spacing of input grid
+
+        Returns:
+            Spacing of output grid after applying strided convolution
+        """
+        stride = tuple(int(s) for s in self.stride)  # type: ignore
+        # When we stride, the effective spacing increases by the stride factor
+        return tuple(spacing * s for spacing, s in zip(input_spacing, stride))
+
     @abstractmethod
     def attn(
         self,
         k: torch.Tensor,  # (B, H, N_k, dims_per_head),
         q: torch.Tensor,  # (B, H, N_q, dims_per_head),
         q_grid_shape: int | Tuple[int, ...],
-        k_grid_shape: Optional[int | Tuple[int, ...]] = None,
+        input_grid_shape: int | Tuple[int, ...],
     ) -> torch.Tensor:
         """Compute attention scores.
 
@@ -151,7 +195,7 @@ class SpatialGroupingAttention:
             q: Query tensor of shape (B, H, N_q, dims_per_head)
             k: Key tensor of shape (B, H, N_k, dims_per_head)
             q_grid_shape: Grid shape for query tensor
-            k_grid_shape: Grid shape for key tensor (optional, defaults to q_grid_shape)
+            input_grid_shape: Grid shape for key tensor
 
         Returns:
             Tensor of attention scores of shape (B, H, N_q, N_k)
@@ -161,22 +205,33 @@ class SpatialGroupingAttention:
     def forward(
         self,
         x: torch.Tensor,
-        q_spacing: Tuple[float, ...],
-        q_grid_shape: Optional[Tuple[int, ...]] = None,
-        k_spacing: Optional[Tuple[float, ...]] = None,
-        k_grid_shape: Optional[Tuple[int, ...]] = None,
+        input_spacing: Tuple[float, ...],
+        input_grid_shape: Tuple[int, ...],
         mask: Optional[torch.Tensor] = None,
     ) -> dict[str, torch.Tensor]:
-        if k_spacing is None:
-            k_spacing = q_spacing
-        if k_grid_shape is None:
-            k_grid_shape = q_grid_shape
+        """Forward pass with automatic query grid calculation.
+
+        Args:
+            x: Input tensor of shape (B, N_in, D)
+            input_spacing: Spacing for key grid (input)
+            input_grid_shape: Shape of key grid (input)
+            mask: Optional mask tensor
+
+        Returns:
+            Dictionary with output tensor and optional debug info
+        """
+        # Auto-calculate query parameters if not provided
+        q_spacing = self._calculate_strided_spacing(input_spacing)
+        q_grid_shape = self._calculate_strided_grid_shape(input_grid_shape)
 
         B, N_in, D = x.shape
-        x_out = self.norm1(self.strider(x))
-        N_q = x_out.shape[1]
+        x_out = self.strider(
+            x.transpose(1, 2).reshape(B, D, *input_grid_shape)
+        )  # (B, D, *input_grid_shape)
+        x_out = self.norm1(x_out.flatten(2).transpose(1, 2))  # (B, N_out, D)
+        N_out = x_out.shape[1]
         attn_k = torch.empty(
-            (B, self.num_heads, N_q, N_in),
+            (B, self.num_heads, N_out, N_in),
             device=x_out.device,
         )
         attn_q = attn_k.clone()
@@ -184,7 +239,7 @@ class SpatialGroupingAttention:
             k, v = self.kv(x).chunk(2, dim=-1)  # (B, N_in, D), (B, N_in, D)
 
             # --> (B, H, N, dims_per_head)
-            k = self.temp * self.k_pe(x, k_spacing, k_grid_shape, flatten=False)
+            k = self.temp * self.k_pe(k, input_spacing, input_grid_shape, flatten=False)
             q = self.q_pe(self.q(x_out), q_spacing, q_grid_shape, flatten=False)
             if mask is not None:
                 raise NotImplementedError(
@@ -193,13 +248,14 @@ class SpatialGroupingAttention:
                 )
 
             # --> (B, H, N_out, N_in)
-            attn_k = self.attn(q, k, q_grid_shape, k_grid_shape)
+            attn_k = self.attn(k, q, q_grid_shape, input_grid_shape)
             attn_q = attn_k / (
                 attn_k.sum(dim=1, keepdim=True) + torch.finfo(k.dtype).eps
             )
 
-            # --> (B, N_out, D)
-            x_out = x_out + self.norm2((attn_q.T @ v.view(*k.shape)).view(B, N_q, D))
+            v = v.reshape(*k.shape)  # (B, H, N_in, dims_per_head)
+            # --> (B, N_out, D)N_out, N_in)}"
+            x_out = x_out + self.norm2((attn_q @ v).reshape(B, N_out, D))
             x_out = x_out + self.norm3(self.mlp(x_out))  # (B, N_out, D)
 
         return {
@@ -261,23 +317,13 @@ class SparseSpatialGroupingAttention(SpatialGroupingAttention):
         k: torch.Tensor,  # (B, N_k, D)
         q: torch.Tensor,  # (B, N_q, D)
         q_grid_shape: int | Tuple[int, ...],
-        k_grid_shape: Optional[int | Tuple[int, ...]] = None,
+        input_grid_shape: int | Tuple[int, ...],
     ) -> torch.Tensor:
         """Compute sparse neighborhood attention scores."""
-        # Reshape k and q for neighborhood attention
-        q_grid_shape = to_tuple(
-            q_grid_shape, self.spatial_dims, dtype_caster=int, allow_nested=False
-        )  # type: ignore
-        if k_grid_shape is None:
-            k_grid_shape = q_grid_shape
-        else:
-            k_grid_shape = to_tuple(
-                k_grid_shape, self.spatial_dims, dtype_caster=int, allow_nested=False
-            )  # type: ignore
 
         B, H, _, dims_per_head = k.shape
 
-        k = k.view(B, H, *k_grid_shape, dims_per_head)  # type: ignore
+        k = k.view(B, H, *input_grid_shape, dims_per_head)  # type: ignore
         q = q.view(B, H, *q_grid_shape, dims_per_head)  # type: ignore
 
         # Compute attention scores using neighborhood attention
@@ -301,11 +347,11 @@ class DenseSpatialGroupingAttention(SpatialGroupingAttention):
         k: torch.Tensor,  # (B, H, N_k, D)
         q: torch.Tensor,  # (B, H, N_q, D)
         q_grid_shape: int | Tuple[int, ...],
-        k_grid_shape: Optional[int | Tuple[int, ...]] = None,
+        input_grid_shape: int | Tuple[int, ...],
     ) -> torch.Tensor:
         """Compute dense full attention scores."""
         # TODO: Make fused triton softmax(k @ q.T, dim=-1)
         # q: (B, H, N_q, D), k: (B, H, N_k, D) -> attn: (B, H, N_q, N_k)
         attn = torch.einsum("bhqd,bhkd->bhqk", q, k)  # (B, H, N_q, N_k)
-        attn = torch.softmax(attn, dim=-2)  # Softmax over groups
+        attn = torch.softmax(attn, dim=-1)  # Softmax over groups
         return attn

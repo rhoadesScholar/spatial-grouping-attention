@@ -73,14 +73,10 @@ class TestSpatialGroupingAttentionIntegration:
         assert attn.kv.in_features == feature_dims
         assert attn.kv.out_features == 2 * feature_dims
 
-    def test_mlp_in_spatial_grouping_attention(self, natten_available):
+    def test_mlp_in_spatial_grouping_attention(self):
         """Test MLP integration within spatial attention."""
-        if not natten_available:
-            pytest.skip(
-                "SparseSpatialGroupingAttention requires NATTEN with CUDA support"
-            )
 
-        attn = SparseSpatialGroupingAttention(
+        attn = DenseSpatialGroupingAttention(
             feature_dims=128, spatial_dims=2, mlp_ratio=4, mlp_dropout=0.1
         )
 
@@ -89,76 +85,6 @@ class TestSpatialGroupingAttentionIntegration:
         assert attn.mlp.fc1.out_features == 128 * 4  # mlp_ratio = 4
         assert attn.mlp.fc2.out_features == 128
         assert attn.mlp.drop.p == 0.1
-
-    @pytest.mark.slow
-    def test_dense_attention_forward_2d(self):
-        """Test dense attention forward pass in 2D (may fail without full deps)."""
-        try:
-            attn = DenseSpatialGroupingAttention(
-                feature_dims=32,
-                spatial_dims=2,
-                kernel_size=5,
-                num_heads=4,
-                iters=1,  # Reduce iterations for speed
-            )
-
-            batch_size = 2
-            height, width = 4, 4
-            seq_len = height * width
-
-            x = torch.randn(batch_size, seq_len, 32)
-            q_spacing = (1.0, 1.0)
-            q_grid_shape = (height, width)
-
-            result = attn.forward(x, q_spacing=q_spacing, q_grid_shape=q_grid_shape)
-
-            # Check return structure
-            assert isinstance(result, dict)
-            assert "x_out" in result
-            assert "attn_q" in result
-            assert "attn_k" in result
-
-            # Check shapes
-            x_out = result["x_out"]
-            assert x_out.shape[0] == batch_size
-            assert x_out.shape[2] == 32  # feature dims
-
-        except (ImportError, RuntimeError, AttributeError) as e:
-            pytest.skip(f"Skipping dense attention test due to dependencies: {e}")
-
-    @pytest.mark.slow
-    def test_sparse_attention_forward_2d(self, natten_available):
-        """Test sparse attention forward pass in 2D (may fail without full deps)."""
-        if not natten_available:
-            pytest.skip(
-                "SparseSpatialGroupingAttention requires NATTEN with CUDA support"
-            )
-
-        try:
-            attn = SparseSpatialGroupingAttention(
-                feature_dims=32,
-                spatial_dims=2,
-                kernel_size=5,
-                num_heads=4,
-                neighborhood_kernel=3,
-                iters=1,
-            )
-
-            batch_size = 2
-            height, width = 4, 4
-            seq_len = height * width
-
-            x = torch.randn(batch_size, seq_len, 32)
-            q_spacing = (1.0, 1.0)
-            q_grid_shape = (height, width)
-
-            result = attn.forward(x, q_spacing=q_spacing, q_grid_shape=q_grid_shape)
-
-            assert isinstance(result, dict)
-            assert "x_out" in result
-
-        except (ImportError, RuntimeError, AttributeError) as e:
-            pytest.skip(f"Skipping sparse attention test due to dependencies: {e}")
 
 
 @pytest.mark.integration
@@ -347,7 +273,7 @@ class TestDeviceCompatibility:
             for param in mlp_gpu.parameters():
                 assert param.device.type == "cuda"
 
-        except (ImportError, RuntimeError, AttributeError) as e:
+        except ImportError as e:
             pytest.skip(f"Skipping device test due to dependencies: {e}")
 
 

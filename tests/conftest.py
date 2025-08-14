@@ -99,14 +99,7 @@ def _check_natten_availability():
         import torch
 
         if torch.cuda.is_available():
-            # Test if natten functions work with actual tensors
-            test_tensor = torch.randn(1, 1, 3, 3, 4)
-            try:
-                # This should work if natten + CUDA is properly set up
-                _ = na2d_qk(test_tensor, test_tensor, (3, 3), (1, 1))
-                return True
-            except Exception:
-                return False
+            return True
         else:
             # CUDA not available, natten won't work
             return False

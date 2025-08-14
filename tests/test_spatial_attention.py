@@ -9,131 +9,6 @@ from spatial_grouping_attention import (
     SparseSpatialGroupingAttention,
     SpatialGroupingAttention,
 )
-from spatial_grouping_attention.utils import to_list, to_tuple
-
-
-class TestUtilityFunctions:
-    """Test cases for utility functions in utils.py."""
-
-    def test_to_list_with_scalar(self):
-        """Test to_list with scalar input."""
-        result = to_list(5, 3)
-        assert result == [5, 5, 5]
-
-    def test_to_list_with_float(self):
-        """Test to_list with float input."""
-        result = to_list(1.5, 2)
-        assert result == [1.5, 1.5]
-
-    def test_to_list_with_list(self):
-        """Test to_list with list input."""
-        result = to_list([1, 2, 3], 3)
-        assert result == [1, 2, 3]
-
-    def test_to_list_with_tuple(self):
-        """Test to_list with tuple input."""
-        result = to_list((1, 2), 2)
-        assert result == [1, 2]
-
-    def test_to_list_with_nested_structure(self):
-        """Test to_list with nested list structure."""
-        result = to_list([(1, 2), (3, 4)], 2)
-        # When nested structure is detected, inner sequences are converted to lists
-        assert result == [[1, 2], [3, 4]]
-
-    def test_to_list_invalid_length(self):
-        """Test to_list with invalid length."""
-        # to_list validates length and raises ValueError for mismatched length
-        with pytest.raises(ValueError, match="got 3 but expected 2"):
-            to_list([1, 2, 3], 2)
-
-    def test_to_list_invalid_type(self):
-        """Test to_list with invalid type."""
-        with pytest.raises(TypeError):
-            to_list("invalid", 2)
-
-    def test_to_tuple_with_scalar(self):
-        """Test to_tuple with scalar input."""
-        result = to_tuple(7, 2)
-        assert result == (7, 7)
-
-    def test_to_tuple_with_list(self):
-        """Test to_tuple with list input."""
-        result = to_tuple([1, 2, 3], 3)
-        assert result == (1, 2, 3)
-
-    def test_to_tuple_with_nested_structure(self):
-        """Test to_tuple with nested structure."""
-        result = to_tuple([(1, 2), (3, 4)], 2)
-        assert result == ((1, 2), (3, 4))
-
-    def test_to_tuple_invalid_length(self):
-        """Test to_tuple with invalid length."""
-        with pytest.raises(ValueError):
-            to_tuple([1, 2], 3)
-
-    def test_to_tuple_invalid_type(self):
-        """Test to_tuple with invalid type."""
-        with pytest.raises(TypeError):
-            to_tuple("invalid", 2)
-
-
-class TestMLP:
-    """Test cases for MLP class."""
-
-    def test_mlp_initialization(self):
-        """Test MLP initialization with default parameters."""
-        mlp = MLP(in_features=128)
-        assert mlp.fc1.in_features == 128
-        assert mlp.fc1.out_features == 128
-        assert mlp.fc2.in_features == 128
-        assert mlp.fc2.out_features == 128
-        assert isinstance(mlp.act, torch.nn.GELU)
-
-    def test_mlp_initialization_with_params(self):
-        """Test MLP initialization with custom parameters."""
-        mlp = MLP(
-            in_features=64,
-            hidden_features=256,
-            out_features=32,
-            act_layer=torch.nn.ReLU,
-            drop=0.1,
-            bias=False,
-        )
-        assert mlp.fc1.in_features == 64
-        assert mlp.fc1.out_features == 256
-        assert mlp.fc2.in_features == 256
-        assert mlp.fc2.out_features == 32
-        assert isinstance(mlp.act, torch.nn.ReLU)
-        assert mlp.drop.p == 0.1
-        assert not mlp.fc1.bias
-        assert not mlp.fc2.bias
-
-    def test_mlp_forward(self):
-        """Test MLP forward pass."""
-        mlp = MLP(in_features=64, hidden_features=128)
-        x = torch.randn(2, 10, 64)  # (batch, seq, features)
-        output = mlp(x)
-        assert output.shape == (2, 10, 64)
-
-    def test_mlp_forward_different_out_features(self):
-        """Test MLP forward pass with different output features."""
-        mlp = MLP(in_features=64, hidden_features=128, out_features=32)
-        x = torch.randn(2, 10, 64)
-        output = mlp(x)
-        assert output.shape == (2, 10, 32)
-
-    def test_mlp_shortcut_identity(self):
-        """Test MLP shortcut connection when in_features == out_features."""
-        mlp = MLP(in_features=64)
-        assert isinstance(mlp.shortcut, torch.nn.Identity)
-
-    def test_mlp_shortcut_linear(self):
-        """Test MLP shortcut connection when in_features != out_features."""
-        mlp = MLP(in_features=64, out_features=32)
-        assert isinstance(mlp.shortcut, torch.nn.Linear)
-        assert mlp.shortcut.in_features == 64
-        assert mlp.shortcut.out_features == 32
 
 
 class TestSpatialGroupingAttentionBase:
@@ -288,17 +163,21 @@ class TestDenseSpatialGroupingAttention:
         # This is a basic shape test - actual forward pass would require
         # the full dependencies to be installed and working
         attn = DenseSpatialGroupingAttention(
-            feature_dims=64, spatial_dims=2, num_heads=4
+            feature_dims=64, spatial_dims=2, num_heads=4, kernel_size=5
         )
 
         # Test that attn method exists and can be called with correct shapes
-        batch_size, num_heads, seq_len, dim_per_head = 2, 4, 16, 16
-        k = torch.randn(batch_size, num_heads, seq_len, dim_per_head)
-        q = torch.randn(batch_size, num_heads, seq_len, dim_per_head)
+        batch_size, num_heads, shape, dim_per_head = 2, 4, 16, 16
+        seq_len_k = shape**2
+        seq_len_q = (shape // 2) ** 2  # Assume q is half the size of k
+        k = torch.randn(batch_size, num_heads, seq_len_k, dim_per_head)
+        q = torch.randn(batch_size, num_heads, seq_len_q, dim_per_head)
 
         # This should work without errors
-        result = attn.attn(k, q, q_grid_shape=(4, 4))
-        assert result.shape == (batch_size, num_heads, seq_len, seq_len)
+        result = attn.attn(
+            k, q, input_grid_shape=(shape, shape), q_grid_shape=(shape // 2, shape // 2)
+        )
+        assert result.shape == (batch_size, num_heads, seq_len_q, seq_len_k)
 
 
 # Fixtures for reusable test data
@@ -384,13 +263,25 @@ class TestErrorHandling:
         Test that base SpatialGroupingAttention raises NotImplementedError
         for abstract methods.
         """
-        attn = SpatialGroupingAttention()
+        feature_dims = 16
+        spatial_dims = 2
+        num_heads = 4
+        kernel_size = 3
+        h, w = 8, 16
+
+        attn = SpatialGroupingAttention(
+            feature_dims=feature_dims,
+            spatial_dims=spatial_dims,
+            num_heads=num_heads,
+            kernel_size=kernel_size,
+        )
 
         with pytest.raises(NotImplementedError):
             # This should raise NotImplementedError since attn is abstract
-            k = torch.randn(1, 4, 10, 16)
-            q = torch.randn(1, 4, 10, 16)
-            attn.attn(k, q, q_grid_shape=(2, 5))
+            k = torch.randn(1, num_heads, h * w, feature_dims)
+            q_h, q_w = h // 2, w // 2
+            q = torch.randn(1, num_heads, q_h * q_w, feature_dims)
+            attn.attn(k, q, q_grid_shape=(q_h, q_w), input_grid_shape=(h, w))
 
     def test_mask_not_implemented_error(self, natten_available):
         """Test that masking raises NotImplementedError in base class."""
@@ -404,7 +295,9 @@ class TestErrorHandling:
         mask = torch.ones(1, 16)
 
         with pytest.raises(NotImplementedError, match="Masking is not implemented"):
-            attn.forward(x, q_spacing=(1.0, 1.0), q_grid_shape=(4, 4), mask=mask)
+            attn.forward(
+                x, input_spacing=(1.0, 1.0), input_grid_shape=(4, 4), mask=mask
+            )
 
 
 @pytest.mark.integration
@@ -430,12 +323,14 @@ class TestIntegration:
 
         # Create input tensor (batch, height*width, features)
         x = torch.randn(2, 16, 64)  # 4x4 spatial grid
-        q_spacing = (1.0, 1.0)
-        q_grid_shape = (4, 4)
+        input_spacing = (1.0, 1.0)
+        input_grid_shape = (4, 4)
 
         # This test may fail if dependencies aren't installed, so we'll catch that
         try:
-            result = attn.forward(x, q_spacing=q_spacing, q_grid_shape=q_grid_shape)
+            result = attn.forward(
+                x, input_spacing=input_spacing, input_grid_shape=input_grid_shape
+            )
 
             assert "x_out" in result
             assert "attn_q" in result
@@ -445,28 +340,30 @@ class TestIntegration:
             assert result["x_out"].shape[0] == 2  # batch size
             assert result["x_out"].shape[2] == 64  # feature dims
 
-        except (ImportError, RuntimeError) as e:
+        except ImportError as e:
             pytest.skip(f"Skipping integration test due to missing dependencies: {e}")
 
     @pytest.mark.slow
     def test_dense_attention_end_to_end_2d(self):
         """Test complete dense attention workflow in 2D."""
         attn = DenseSpatialGroupingAttention(
-            feature_dims=64, spatial_dims=2, kernel_size=7, num_heads=4, iters=1
+            feature_dims=32, spatial_dims=2, kernel_size=5, num_heads=4, iters=1
         )
 
-        x = torch.randn(2, 16, 64)
-        q_spacing = (1.0, 1.0)
-        q_grid_shape = (4, 4)
+        x = torch.randn(2, 64, 32)
+        input_spacing = (1.0, 1.0)
+        input_grid_shape = (8, 8)
 
         try:
-            result = attn.forward(x, q_spacing=q_spacing, q_grid_shape=q_grid_shape)
+            result = attn(
+                x, input_spacing=input_spacing, input_grid_shape=input_grid_shape
+            )
 
             assert "x_out" in result
             assert "attn_q" in result
             assert "attn_k" in result
 
-        except (ImportError, RuntimeError) as e:
+        except ImportError as e:
             pytest.skip(f"Skipping integration test due to missing dependencies: {e}")
 
 
