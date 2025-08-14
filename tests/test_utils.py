@@ -2,7 +2,7 @@
 
 import pytest
 
-from spatial_attention.utils import to_list, to_tuple
+from spatial_grouping_attention.utils import to_list, to_tuple
 
 
 class TestToList:

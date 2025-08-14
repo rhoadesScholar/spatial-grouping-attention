@@ -9,13 +9,33 @@ from .mlp import MLP
 from .utils import to_tuple
 
 
-class SpatialAttention:
-    """Main class for spatial_attention.
-
-    This is a template class that you should modify according to your needs.
+class SpatialGroupingAttention:
+    """Base class for spatial grouping attention. Modify `attn` method in subclasses.
 
     Args:
         spatial_dims: Number of spatial dimensions (2 or 3)
+        feature_dims: Number of input feature dimensions
+        kernel_size: Size of the convolutional kernel for strided
+                     convolutions producing the lower resolution group embeddings
+        num_heads: Number of attention heads
+        stride: Stride for the strided convolution (default is half kernel size)
+        iters: Number of iterations for the attention mechanism (default is 3)
+        mlp_ratio: Ratio of hidden to input/output dimensions in the MLP (default is 4)
+        mlp_dropout: Dropout rate for the MLP (default is 0.0)
+        mlp_bias: Whether to use bias in the MLP (default is True)
+        mlp_activation: Activation function for the MLP (default is GELU)
+        qkv_bias: Whether to use bias in the query/key/value linear layers
+                  (default is True)
+        base_theta: Base theta value for the rotary position embedding
+                    (default is 1e4)
+        learnable_rose: Whether to use learnable rotary spatial embeddings
+                        (default is True)
+        init_jitter_std: Standard deviation for initial jitter in the rotary
+                         embeddings (default is 0.02)
+        spacing: Default real-world pixel spacing for the input data
+                 (default is None, which uses a default spacing of 1.0 for
+                 all dimensions). Can be specified at initialization or passed
+                 during the forward pass.
     """
 
     def __init__(
@@ -34,7 +54,7 @@ class SpatialAttention:
         base_theta: float = 1e4,
         learnable_rose: bool = True,
         init_jitter_std: float = 0.02,
-        spacing: Optional[float | Sequence[float]] = None,  # used for default spacing
+        spacing: Optional[float | Sequence[float]] = None,
     ) -> None:
         conv = {
             1: torch.nn.Conv1d,
@@ -130,6 +150,8 @@ class SpatialAttention:
         Args:
             q: Query tensor of shape (B, H, N_q, dims_per_head)
             k: Key tensor of shape (B, H, N_k, dims_per_head)
+            q_grid_shape: Grid shape for query tensor
+            k_grid_shape: Grid shape for key tensor (optional, defaults to q_grid_shape)
 
         Returns:
             Tensor of attention scores of shape (B, H, N_q, N_k)
@@ -166,7 +188,8 @@ class SpatialAttention:
             q = self.q_pe(self.q(x_out), q_spacing, q_grid_shape, flatten=False)
             if mask is not None:
                 raise NotImplementedError(
-                    "Masking is not implemented in the base SpatialAttention class."
+                    "Masking is not implemented in the base "
+                    "SpatialGroupingAttention class."
                 )
 
             # --> (B, H, N_out, N_in)
@@ -187,11 +210,11 @@ class SpatialAttention:
 
     def __repr__(self) -> str:
         """Return string representation of the object."""
-        return f"SpatialAttention{self.spatial_dims}D"
+        return f"SpatialGroupingAttention{self.spatial_dims}D"
 
 
-class SparseSpatialAttention(SpatialAttention):
-    """Sparse version of SpatialAttention using neighborhood attention."""
+class SparseSpatialGroupingAttention(SpatialGroupingAttention):
+    """Sparse version of SpatialGroupingAttention using neighborhood attention."""
 
     def __init__(
         self,
@@ -214,7 +237,7 @@ class SparseSpatialAttention(SpatialAttention):
             )
         except ImportError:
             raise ImportError(
-                "NATTEN is required for SparseSpatialAttention. "
+                "NATTEN is required for SparseSpatialGroupingAttention. "
                 "Please install it with `pip install natten==0.17.5`"
                 "Note that NATTEN requires CUDA support."
             )
@@ -250,7 +273,7 @@ class SparseSpatialAttention(SpatialAttention):
         else:
             k_grid_shape = to_tuple(
                 k_grid_shape, self.spatial_dims, dtype_caster=int, allow_nested=False
-            )
+            )  # type: ignore
 
         B, H, _, dims_per_head = k.shape
 
@@ -270,8 +293,8 @@ class SparseSpatialAttention(SpatialAttention):
         return attn
 
 
-class DenseSpatialAttention(SpatialAttention):
-    """Dense version of SpatialAttention using full attention."""
+class DenseSpatialGroupingAttention(SpatialGroupingAttention):
+    """Dense version of SpatialGroupingAttention using full attention."""
 
     def attn(
         self,

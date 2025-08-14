@@ -1,15 +1,15 @@
-"""Test suite for spatial_attention."""
+"""Test suite for spatial_grouping_attention."""
 
 import pytest
 import torch
 
-from spatial_attention import (
+from spatial_grouping_attention import (
     MLP,
-    DenseSpatialAttention,
-    SparseSpatialAttention,
-    SpatialAttention,
+    DenseSpatialGroupingAttention,
+    SparseSpatialGroupingAttention,
+    SpatialGroupingAttention,
 )
-from spatial_attention.utils import to_list, to_tuple
+from spatial_grouping_attention.utils import to_list, to_tuple
 
 
 class TestUtilityFunctions:
@@ -136,12 +136,12 @@ class TestMLP:
         assert mlp.shortcut.out_features == 32
 
 
-class TestSpatialAttentionBase:
-    """Test cases for base SpatialAttention class."""
+class TestSpatialGroupingAttentionBase:
+    """Test cases for base SpatialGroupingAttention class."""
 
-    def test_spatial_attention_initialization_2d(self):
-        """Test SpatialAttention initialization with 2D."""
-        attn = SpatialAttention(
+    def test_spatial_grouping_attention_initialization_2d(self):
+        """Test SpatialGroupingAttention initialization with 2D."""
+        attn = SpatialGroupingAttention(
             feature_dims=128, spatial_dims=2, kernel_size=7, num_heads=8
         )
         assert attn.feature_dims == 128
@@ -150,9 +150,9 @@ class TestSpatialAttentionBase:
         assert attn.num_heads == 8
         assert len(attn._default_spacing) == 2
 
-    def test_spatial_attention_initialization_3d(self):
-        """Test SpatialAttention initialization with 3D."""
-        attn = SpatialAttention(
+    def test_spatial_grouping_attention_initialization_3d(self):
+        """Test SpatialGroupingAttention initialization with 3D."""
+        attn = SpatialGroupingAttention(
             feature_dims=256, spatial_dims=3, kernel_size=[5, 7, 9], num_heads=16
         )
         assert attn.feature_dims == 256
@@ -161,35 +161,35 @@ class TestSpatialAttentionBase:
         assert attn.num_heads == 16
         assert len(attn._default_spacing) == 3
 
-    def test_spatial_attention_custom_spacing(self):
-        """Test SpatialAttention with custom spacing."""
-        attn = SpatialAttention(spatial_dims=3, spacing=[1.0, 2.0, 0.5])
+    def test_spatial_grouping_attention_custom_spacing(self):
+        """Test SpatialGroupingAttention with custom spacing."""
+        attn = SpatialGroupingAttention(spatial_dims=3, spacing=[1.0, 2.0, 0.5])
         assert attn._default_spacing == (1.0, 2.0, 0.5)
 
-    def test_spatial_attention_repr(self):
+    def test_spatial_grouping_attention_repr(self):
         """Test string representation."""
-        attn = SpatialAttention(spatial_dims=2)
+        attn = SpatialGroupingAttention(spatial_dims=2)
         repr_str = repr(attn)
-        assert "SpatialAttention2D" in repr_str
+        assert "SpatialGroupingAttention2D" in repr_str
 
-        attn_3d = SpatialAttention(spatial_dims=3)
+        attn_3d = SpatialGroupingAttention(spatial_dims=3)
         repr_str_3d = repr(attn_3d)
-        assert "SpatialAttention3D" in repr_str_3d
+        assert "SpatialGroupingAttention3D" in repr_str_3d
 
-    def test_spatial_attention_stride_calculation(self):
+    def test_spatial_grouping_attention_stride_calculation(self):
         """Test automatic stride calculation."""
-        attn = SpatialAttention(spatial_dims=2, kernel_size=7)
+        attn = SpatialGroupingAttention(spatial_dims=2, kernel_size=7)
         # Default stride should be kernel_size // 2
         assert attn.stride == (3, 3)
 
-    def test_spatial_attention_custom_stride(self):
+    def test_spatial_grouping_attention_custom_stride(self):
         """Test custom stride setting."""
-        attn = SpatialAttention(spatial_dims=2, kernel_size=7, stride=2)
+        attn = SpatialGroupingAttention(spatial_dims=2, kernel_size=7, stride=2)
         assert attn.stride == (2, 2)
 
-    def test_spatial_attention_components_created(self):
+    def test_spatial_grouping_attention_components_created(self):
         """Test that all required components are created."""
-        attn = SpatialAttention(feature_dims=128, spatial_dims=2, num_heads=8)
+        attn = SpatialGroupingAttention(feature_dims=128, spatial_dims=2, num_heads=8)
 
         # Check linear layers
         assert hasattr(attn, "q") and isinstance(attn.q, torch.nn.Linear)
@@ -216,15 +216,17 @@ class TestSpatialAttentionBase:
 
 
 @pytest.mark.natten
-class TestSparseSpatialAttention:
-    """Test cases for SparseSpatialAttention class."""
+class TestSparseSpatialGroupingAttention:
+    """Test cases for SparseSpatialGroupingAttention class."""
 
     def test_sparse_initialization(self, natten_available):
-        """Test SparseSpatialAttention initialization."""
+        """Test SparseSpatialGroupingAttention initialization."""
         if not natten_available:
-            pytest.skip("SparseSpatialAttention requires NATTEN with CUDA support")
+            pytest.skip(
+                "SparseSpatialGroupingAttention requires NATTEN with CUDA support"
+            )
 
-        attn = SparseSpatialAttention(
+        attn = SparseSpatialGroupingAttention(
             feature_dims=128,
             spatial_dims=2,
             neighborhood_kernel=3,
@@ -236,11 +238,16 @@ class TestSparseSpatialAttention:
         assert attn.is_causal is True
 
     def test_sparse_initialization_different_kernels(self, natten_available):
-        """Test SparseSpatialAttention with different kernel sizes per dimension."""
+        """
+        Test SparseSpatialGroupingAttention with different kernel sizes per
+        dimension.
+        """
         if not natten_available:
-            pytest.skip("SparseSpatialAttention requires NATTEN with CUDA support")
+            pytest.skip(
+                "SparseSpatialGroupingAttention requires NATTEN with CUDA " "support"
+            )
 
-        attn = SparseSpatialAttention(
+        attn = SparseSpatialGroupingAttention(
             spatial_dims=3,
             neighborhood_kernel=[3, 5, 7],
             neighborhood_dilation=[1, 2, 1],
@@ -251,10 +258,12 @@ class TestSparseSpatialAttention:
     def test_sparse_has_attention_functions(self, natten_available):
         """Test that sparse attention has the right attention functions."""
         if not natten_available:
-            pytest.skip("SparseSpatialAttention requires NATTEN with CUDA support")
+            pytest.skip(
+                "SparseSpatialGroupingAttention requires NATTEN with CUDA support"
+            )
 
-        attn_2d = SparseSpatialAttention(spatial_dims=2)
-        attn_3d = SparseSpatialAttention(spatial_dims=3)
+        attn_2d = SparseSpatialGroupingAttention(spatial_dims=2)
+        attn_3d = SparseSpatialGroupingAttention(spatial_dims=3)
 
         assert hasattr(attn_2d, "_qk_attn")
         assert hasattr(attn_2d, "_av_attn")
@@ -262,21 +271,25 @@ class TestSparseSpatialAttention:
         assert hasattr(attn_3d, "_av_attn")
 
 
-class TestDenseSpatialAttention:
-    """Test cases for DenseSpatialAttention class."""
+class TestDenseSpatialGroupingAttention:
+    """Test cases for DenseSpatialGroupingAttention class."""
 
     def test_dense_initialization(self):
-        """Test DenseSpatialAttention initialization."""
-        attn = DenseSpatialAttention(feature_dims=128, spatial_dims=2, num_heads=8)
+        """Test DenseSpatialGroupingAttention initialization."""
+        attn = DenseSpatialGroupingAttention(
+            feature_dims=128, spatial_dims=2, num_heads=8
+        )
         assert attn.feature_dims == 128
         assert attn.spatial_dims == 2
         assert attn.num_heads == 8
 
     def test_dense_forward_shapes(self):
-        """Test DenseSpatialAttention forward pass shapes."""
+        """Test DenseSpatialGroupingAttention forward pass shapes."""
         # This is a basic shape test - actual forward pass would require
         # the full dependencies to be installed and working
-        attn = DenseSpatialAttention(feature_dims=64, spatial_dims=2, num_heads=4)
+        attn = DenseSpatialGroupingAttention(
+            feature_dims=64, spatial_dims=2, num_heads=4
+        )
 
         # Test that attn method exists and can be called with correct shapes
         batch_size, num_heads, seq_len, dim_per_head = 2, 4, 16, 16
@@ -302,17 +315,17 @@ def sample_tensor_3d():
 
 
 @pytest.fixture
-def basic_spatial_attention_2d():
-    """Fixture providing a basic 2D SpatialAttention object."""
-    return SparseSpatialAttention(
+def basic_spatial_grouping_attention_2d():
+    """Fixture providing a basic 2D SpatialGroupingAttention object."""
+    return SparseSpatialGroupingAttention(
         feature_dims=64, spatial_dims=2, kernel_size=7, num_heads=4
     )
 
 
 @pytest.fixture
-def basic_spatial_attention_3d():
-    """Fixture providing a basic 3D SpatialAttention object."""
-    return SparseSpatialAttention(
+def basic_spatial_grouping_attention_3d():
+    """Fixture providing a basic 3D SpatialGroupingAttention object."""
+    return SparseSpatialGroupingAttention(
         feature_dims=128, spatial_dims=3, kernel_size=5, num_heads=8
     )
 
@@ -323,14 +336,14 @@ class TestParameterizedCases:
     @pytest.mark.parametrize("spatial_dims", [2, 3])
     @pytest.mark.parametrize("feature_dims", [64, 128, 256])
     @pytest.mark.parametrize("num_heads", [4, 8, 16])
-    def test_spatial_attention_different_configs(
+    def test_spatial_grouping_attention_different_configs(
         self, spatial_dims, feature_dims, num_heads
     ):
-        """Test SpatialAttention with different configurations."""
+        """Test SpatialGroupingAttention with different configurations."""
         if feature_dims % num_heads != 0:
             pytest.skip("feature_dims must be divisible by num_heads")
 
-        attn = SpatialAttention(
+        attn = SpatialGroupingAttention(
             feature_dims=feature_dims, spatial_dims=spatial_dims, num_heads=num_heads
         )
         assert attn.feature_dims == feature_dims
@@ -341,7 +354,9 @@ class TestParameterizedCases:
     def test_kernel_size_variations(self, kernel_size):
         """Test different kernel size configurations."""
         spatial_dims = len(kernel_size) if isinstance(kernel_size, list) else 2
-        attn = SpatialAttention(spatial_dims=spatial_dims, kernel_size=kernel_size)
+        attn = SpatialGroupingAttention(
+            spatial_dims=spatial_dims, kernel_size=kernel_size
+        )
         expected = (
             tuple(kernel_size)
             if isinstance(kernel_size, list)
@@ -353,7 +368,7 @@ class TestParameterizedCases:
     @pytest.mark.parametrize("mlp_dropout", [0.0, 0.1, 0.2])
     def test_mlp_configurations(self, mlp_ratio, mlp_dropout):
         """Test different MLP configurations."""
-        attn = SpatialAttention(
+        attn = SpatialGroupingAttention(
             feature_dims=128, mlp_ratio=mlp_ratio, mlp_dropout=mlp_dropout
         )
         assert attn.mlp_ratio == mlp_ratio
@@ -366,9 +381,10 @@ class TestErrorHandling:
 
     def test_abstract_method_not_implemented(self):
         """
-        Test that base SpatialAttention raises NotImplementedError for abstract methods.
+        Test that base SpatialGroupingAttention raises NotImplementedError
+        for abstract methods.
         """
-        attn = SpatialAttention()
+        attn = SpatialGroupingAttention()
 
         with pytest.raises(NotImplementedError):
             # This should raise NotImplementedError since attn is abstract
@@ -379,9 +395,11 @@ class TestErrorHandling:
     def test_mask_not_implemented_error(self, natten_available):
         """Test that masking raises NotImplementedError in base class."""
         if not natten_available:
-            pytest.skip("SparseSpatialAttention requires NATTEN with CUDA support")
+            pytest.skip(
+                "SparseSpatialGroupingAttention requires NATTEN with CUDA support"
+            )
 
-        attn = SparseSpatialAttention(feature_dims=64, spatial_dims=2)
+        attn = SparseSpatialGroupingAttention(feature_dims=64, spatial_dims=2)
         x = torch.randn(1, 16, 64)
         mask = torch.ones(1, 16)
 
@@ -397,9 +415,11 @@ class TestIntegration:
     def test_sparse_attention_end_to_end_2d(self, natten_available):
         """Test complete sparse attention workflow in 2D."""
         if not natten_available:
-            pytest.skip("SparseSpatialAttention requires NATTEN with CUDA support")
+            pytest.skip(
+                "SparseSpatialGroupingAttention requires NATTEN with CUDA support"
+            )
 
-        attn = SparseSpatialAttention(
+        attn = SparseSpatialGroupingAttention(
             feature_dims=64,
             spatial_dims=2,
             kernel_size=7,
@@ -431,7 +451,7 @@ class TestIntegration:
     @pytest.mark.slow
     def test_dense_attention_end_to_end_2d(self):
         """Test complete dense attention workflow in 2D."""
-        attn = DenseSpatialAttention(
+        attn = DenseSpatialGroupingAttention(
             feature_dims=64, spatial_dims=2, kernel_size=7, num_heads=4, iters=1
         )
 
@@ -453,16 +473,16 @@ class TestIntegration:
 def test_package_imports():
     """Test that package imports work correctly."""
     # Test that we can import main classes
-    from spatial_attention import (
+    from spatial_grouping_attention import (
         MLP,
-        DenseSpatialAttention,
-        SparseSpatialAttention,
-        SpatialAttention,
+        DenseSpatialGroupingAttention,
+        SparseSpatialGroupingAttention,
+        SpatialGroupingAttention,
     )
-    from spatial_attention.utils import to_list, to_tuple
+    from spatial_grouping_attention.utils import to_list, to_tuple
 
     # Test that classes are properly defined
-    assert issubclass(SparseSpatialAttention, SpatialAttention)
-    assert issubclass(DenseSpatialAttention, SpatialAttention)
+    assert issubclass(SparseSpatialGroupingAttention, SpatialGroupingAttention)
+    assert issubclass(DenseSpatialGroupingAttention, SpatialGroupingAttention)
     assert callable(to_list)
     assert callable(to_tuple)

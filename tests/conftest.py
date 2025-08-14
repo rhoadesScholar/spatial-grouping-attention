@@ -1,4 +1,4 @@
-"""Pytest configuration and fixtures for spatial_attention tests."""
+"""Pytest configuration and fixtures for spatial_grouping_attention tests."""
 
 import pytest
 import torch
@@ -40,14 +40,14 @@ def pytest_collection_modifyitems(config, items):
         ):
             item.add_marker(pytest.mark.slow)
 
-        # Mark and skip CUDA-dependent tests (including SparseSpatialAttention)
+        # Mark and skip CUDA-dependent tests (including SparseSpatialGroupingAttention)
         requires_cuda_or_natten = (
-            "SparseSpatialAttention" in item.name
+            "SparseSpatialGroupingAttention" in item.name
             or "sparse" in item.name.lower()
             or "natten" in item.name.lower()
             or "neighborhood" in item.name.lower()
             or any(
-                "SparseSpatialAttention" in str(param)
+                "SparseSpatialGroupingAttention" in str(param)
                 for param in getattr(item, "callspec", None)
                 and getattr(item.callspec, "params", {}).values()
                 or []
@@ -92,7 +92,7 @@ def _check_natten_availability():
         # Import natten first
         import natten  # noqa: F401
 
-        # Try to import the functional modules that SparseSpatialAttention uses
+        # Try to import the functional modules that SparseSpatialGroupingAttention uses
         from natten.functional import na2d_av, na2d_qk  # noqa: F401
 
         # Try creating small tensors to test CUDA functionality
@@ -134,12 +134,12 @@ def natten_available():
 
 @pytest.fixture(scope="session")
 def sparse_attention_available():
-    """Check if SparseSpatialAttention can be instantiated."""
+    """Check if SparseSpatialGroupingAttention can be instantiated."""
     try:
-        from spatial_attention import SparseSpatialAttention
+        from spatial_grouping_attention import SparseSpatialGroupingAttention
 
         # Try to create a minimal instance
-        attn = SparseSpatialAttention(
+        attn = SparseSpatialGroupingAttention(
             feature_dims=32,
             spatial_dims=2,
             kernel_size=3,
@@ -236,7 +236,9 @@ def mock_dependencies(monkeypatch):
     except ImportError:
         # Mock RoSE if not available
         monkeypatch.setattr(
-            "spatial_attention.spatial_attention.RotarySpatialEmbedding", MockRoSE
+            "spatial_grouping_attention.spatial_grouping_attention"
+            ".RotarySpatialEmbedding",
+            MockRoSE,
         )
 
     try:
@@ -245,22 +247,28 @@ def mock_dependencies(monkeypatch):
         # Mock NATTEN functions if not available
         mock_natten = MockNATTEN()
         monkeypatch.setattr(
-            "spatial_attention.spatial_attention.na2d_qk", mock_natten.na2d_qk
+            "spatial_grouping_attention.spatial_grouping_attention.na2d_qk",
+            mock_natten.na2d_qk,
         )
         monkeypatch.setattr(
-            "spatial_attention.spatial_attention.na2d_av", mock_natten.na2d_av
+            "spatial_grouping_attention.spatial_grouping_attention.na2d_av",
+            mock_natten.na2d_av,
         )
         monkeypatch.setattr(
-            "spatial_attention.spatial_attention.na3d_qk", mock_natten.na2d_qk
+            "spatial_grouping_attention.spatial_grouping_attention.na3d_qk",
+            mock_natten.na2d_qk,
         )  # Same mock
         monkeypatch.setattr(
-            "spatial_attention.spatial_attention.na3d_av", mock_natten.na2d_av
+            "spatial_grouping_attention.spatial_grouping_attention.na3d_av",
+            mock_natten.na2d_av,
         )  # Same mock
         monkeypatch.setattr(
-            "spatial_attention.spatial_attention.na1d_qk", mock_natten.na2d_qk
+            "spatial_grouping_attention.spatial_grouping_attention.na1d_qk",
+            mock_natten.na2d_qk,
         )  # Same mock
         monkeypatch.setattr(
-            "spatial_attention.spatial_attention.na1d_av", mock_natten.na2d_av
+            "spatial_grouping_attention.spatial_grouping_attention.na1d_av",
+            mock_natten.na2d_av,
         )  # Same mock
 
 

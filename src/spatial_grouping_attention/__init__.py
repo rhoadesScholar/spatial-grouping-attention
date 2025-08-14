@@ -1,4 +1,4 @@
-"""spatial_attention: Spatial grouping attention
+"""spatial_grouping_attention: Spatial grouping attention
 using Rotary Spatial Embeddings (RoSE)
 
 Inspired by the spatial grouping layer in Native Segmentation
@@ -10,7 +10,7 @@ generalized to N-dimensions and incorporating real-world pixel spacing.
 from importlib.metadata import PackageNotFoundError, version
 
 try:
-    __version__ = version("spatial-attention")
+    __version__ = version("spatial-grouping-attention")
 except PackageNotFoundError:
     __version__ = "0.1.0"
 
@@ -19,19 +19,19 @@ __email__ = "rhoadesj@hhmi.org"
 
 from . import utils
 from .mlp import MLP
-from .spatial_attention import (
-    DenseSpatialAttention,
-    SparseSpatialAttention,
-    SpatialAttention,
+from .spatial_grouping_attention import (
+    DenseSpatialGroupingAttention,
+    SparseSpatialGroupingAttention,
+    SpatialGroupingAttention,
 )
 
 __all__ = [
     "__version__",
     "__author__",
     "__email__",
-    "SpatialAttention",
-    "SparseSpatialAttention",
-    "DenseSpatialAttention",
+    "SpatialGroupingAttention",
+    "SparseSpatialGroupingAttention",
+    "DenseSpatialGroupingAttention",
     "MLP",
     "utils",
 ]

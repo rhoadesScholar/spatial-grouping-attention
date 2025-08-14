@@ -1,12 +1,12 @@
 # spatial-grouping-attention
 
-## PyTorch Implementation of Spatial Grouping Attention Layer
+## PyTorch Implementation of Spatial Grouping Attention
 
-![PyPI - License](https://img.shields.io/pypi/l/spatial-attention)
-[![CI/CD Pipeline](https://github.com/rhoadesScholar/spatial-attention/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/rhoadesScholar/spatial-attention/actions/workflows/ci-cd.yml)
-[![codecov](https://codecov.io/github/rhoadesScholar/spatial-attention/graph/badge.svg?token=)](https://codecov.io/github/rhoadesScholar/spatial-attention)
-![PyPI - Version](https://img.shields.io/pypi/v/spatial-attention)
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/spatial-attention)
+![PyPI - License](https://img.shields.io/pypi/l/spatial-grouping-attention)
+[![CI/CD Pipeline](https://github.com/rhoadesScholar/spatial-grouping-attention/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/rhoadesScholar/spatial-grouping-attention/actions/workflows/ci-cd.yml)
+[![codecov](https://codecov.io/github/rhoadesScholar/spatial-grouping-attention/graph/badge.svg?token=)](https://codecov.io/github/rhoadesScholar/spatial-grouping-attention)
+![PyPI - Version](https://img.shields.io/pypi/v/spatial-grouping-attention)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/spatial-grouping-attention)
 
 Inspired by the spatial grouping layer in Native Segmentation Vision Transformers (https://arxiv.org/abs/2505.16993), implemented in PyTorch with a modified rotary position embedding generalized to N-dimensions and incorporating real-world pixel spacing.
 
@@ -15,64 +15,22 @@ Inspired by the spatial grouping layer in Native Segmentation Vision Transformer
 ### From PyPI
 
 ```bash
-pip install spatial-attention
+pip install spatial-grouping-attention
 ```
 
 ### From source
 
 ```bash
-pip install git+https://github.com/rhoadesScholar/spatial-attention.git
+pip install git+https://github.com/rhoadesScholar/spatial-grouping-attention.git
 ```
 
 ## Usage
 
 ```python
-import spatial_attention
+import spatial_grouping_attention
 
 # Example usage
 # TODO: Add your usage examples here
-```
-
-## Development
-
-### Setting up development environment
-
-```bash
-# Clone the repository
-git clone https://github.com/rhoadesScholar/spatial-attention.git
-cd spatial-attention
-
-# Install in development mode with all dependencies
-make dev-setup
-```
-
-### Running tests
-
-```bash
-# Run all tests
-make test
-
-# Run tests with coverage
-make test-cov
-
-# Run fast tests (stop on first failure)
-make test-fast
-```
-
-### Code quality
-
-```bash
-# Format code
-make format
-
-# Lint code
-make lint
-
-# Type check
-make type-check
-
-# Run all checks
-make check-all
 ```
 
 ## Contributing

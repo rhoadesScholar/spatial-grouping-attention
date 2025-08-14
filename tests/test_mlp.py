@@ -4,7 +4,7 @@ import pytest
 import torch
 import torch.nn as nn
 
-from spatial_attention.mlp import MLP
+from spatial_grouping_attention.mlp import MLP
 
 
 class TestMLPBasics:

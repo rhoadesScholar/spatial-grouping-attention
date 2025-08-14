@@ -1,6 +1,6 @@
-# spatial-attention Documentation
+# spatial-grouping-attention Documentation
 
-Welcome to the spatial-attention documentation!
+Welcome to the spatial-grouping-attention documentation!
 
 ## Overview
 
@@ -21,27 +21,25 @@ Inspired by the spatial grouping layer in Native Segmentation Vision Transformer
 ### Installation
 
 ```bash
-pip install spatial-attention
+pip install spatial-grouping-attention
 ```
 
 ### Quick Example
 
 ```python
-import spatial_attention
+import spatial_grouping_attention
 
-# Your example code here
-obj = spatial_attention.SpatialAttention(param1="example")
-result = obj.process()
-print(result)
+# Create your spatial attention object
+obj = spatial_grouping_attention.SpatialGroupingAttention(param1="example")
 ```
 
 ## Support
 
 If you encounter any issues or have questions, please:
 
-1. Check the [documentation](https://github.com/rhoadesScholar/spatial-attention)
-2. Search [existing issues](https://github.com/rhoadesScholar/spatial-attention/issues)
-3. Create a [new issue](https://github.com/rhoadesScholar/spatial-attention/issues/new)
+1. Check the [documentation](https://github.com/rhoadesScholar/spatial-grouping-attention)
+2. Search [existing issues](https://github.com/rhoadesScholar/spatial-grouping-attention/issues)
+3. Create a [new issue](https://github.com/rhoadesScholar/spatial-grouping-attention/issues/new)
 
 ## License
 

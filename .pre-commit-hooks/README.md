@@ -1,6 +1,6 @@
 # Pre-commit Hooks
 
-This directory contains custom pre-commit hooks for the spatial-attention project.
+This directory contains custom pre-commit hooks for the spatial-grouping-attention project.
 
 ## update-version.py
 

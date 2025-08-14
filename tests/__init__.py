@@ -1,1 +1,1 @@
-"""Test package for spatial_attention."""
+"""Test package for spatial_grouping_attention."""

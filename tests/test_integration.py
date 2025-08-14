@@ -1,4 +1,4 @@
-"""Integration tests for spatial attention modules."""
+"""Integration tests for spatial grouping attention modules."""
 
 import pytest
 import torch
@@ -8,34 +8,39 @@ import torch.nn as nn
 pytest.importorskip("torch", reason="PyTorch is required for integration tests")
 
 try:
-    from spatial_attention import (
+    from spatial_grouping_attention import (
         MLP,
-        DenseSpatialAttention,
-        SparseSpatialAttention,
-        SpatialAttention,
+        DenseSpatialGroupingAttention,
+        SparseSpatialGroupingAttention,
+        SpatialGroupingAttention,
     )
 
-    SPATIAL_ATTENTION_AVAILABLE = True
+    spatial_grouping_attention_AVAILABLE = True
 except ImportError:
-    SPATIAL_ATTENTION_AVAILABLE = False
-    pytest.skip("spatial_attention module not available", allow_module_level=True)
+    spatial_grouping_attention_AVAILABLE = False
+    pytest.skip(
+        "spatial_grouping_attention module not available", allow_module_level=True
+    )
 
 
 @pytest.mark.integration
-class TestSpatialAttentionIntegration:
+class TestSpatialGroupingAttentionIntegration:
     """Integration tests for spatial attention classes."""
 
     @pytest.mark.parametrize("spatial_dims", [2, 3])
     @pytest.mark.parametrize(
-        "attention_class", [SparseSpatialAttention, DenseSpatialAttention]
+        "attention_class",
+        [SparseSpatialGroupingAttention, DenseSpatialGroupingAttention],
     )
     def test_attention_initialization_and_shapes(
         self, spatial_dims, attention_class, natten_available
     ):
         """Test that attention classes initialize correctly and have right shapes."""
-        # Skip if using SparseSpatialAttention and natten is not available
-        if attention_class == SparseSpatialAttention and not natten_available:
-            pytest.skip("SparseSpatialAttention requires NATTEN with CUDA support")
+        # Skip if using SparseSpatialGroupingAttention and natten is not available
+        if attention_class == SparseSpatialGroupingAttention and not natten_available:
+            pytest.skip(
+                "SparseSpatialGroupingAttention requires NATTEN with CUDA support"
+            )
 
         feature_dims = 64
         num_heads = 4
@@ -68,12 +73,14 @@ class TestSpatialAttentionIntegration:
         assert attn.kv.in_features == feature_dims
         assert attn.kv.out_features == 2 * feature_dims
 
-    def test_mlp_in_spatial_attention(self, natten_available):
+    def test_mlp_in_spatial_grouping_attention(self, natten_available):
         """Test MLP integration within spatial attention."""
         if not natten_available:
-            pytest.skip("SparseSpatialAttention requires NATTEN with CUDA support")
+            pytest.skip(
+                "SparseSpatialGroupingAttention requires NATTEN with CUDA support"
+            )
 
-        attn = SparseSpatialAttention(
+        attn = SparseSpatialGroupingAttention(
             feature_dims=128, spatial_dims=2, mlp_ratio=4, mlp_dropout=0.1
         )
 
@@ -87,7 +94,7 @@ class TestSpatialAttentionIntegration:
     def test_dense_attention_forward_2d(self):
         """Test dense attention forward pass in 2D (may fail without full deps)."""
         try:
-            attn = DenseSpatialAttention(
+            attn = DenseSpatialGroupingAttention(
                 feature_dims=32,
                 spatial_dims=2,
                 kernel_size=5,
@@ -123,10 +130,12 @@ class TestSpatialAttentionIntegration:
     def test_sparse_attention_forward_2d(self, natten_available):
         """Test sparse attention forward pass in 2D (may fail without full deps)."""
         if not natten_available:
-            pytest.skip("SparseSpatialAttention requires NATTEN with CUDA support")
+            pytest.skip(
+                "SparseSpatialGroupingAttention requires NATTEN with CUDA support"
+            )
 
         try:
-            attn = SparseSpatialAttention(
+            attn = SparseSpatialGroupingAttention(
                 feature_dims=32,
                 spatial_dims=2,
                 kernel_size=5,
@@ -326,7 +335,7 @@ class TestDeviceCompatibility:
             pytest.skip("CUDA not available")
 
         try:
-            attn_cpu = DenseSpatialAttention(
+            attn_cpu = DenseSpatialGroupingAttention(
                 feature_dims=32, spatial_dims=2, num_heads=4, iters=1
             )
 

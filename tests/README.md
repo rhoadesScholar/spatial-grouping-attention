@@ -1,12 +1,12 @@
-# Tests for spatial-attention
+# Tests for spatial-grouping-attention
 
-This directory contains comprehensive tests for the spatial-attention package.
+This directory contains comprehensive tests for the spatial-grouping-attention package.
 
 ## Test Structure
 
 The test suite is organized into several files:
 
-- `test_spatial_attention.py` - Main tests for spatial attention classes
+- `test_spatial_grouping_attention.py` - Main tests for spatial attention classes
 - `test_mlp.py` - Focused tests for the MLP module
 - `test_utils.py` - Tests for utility functions
 - `test_integration.py` - Integration tests and end-to-end workflows
@@ -29,7 +29,7 @@ Tests are categorized using pytest markers:
 pytest tests/
 
 # Run with coverage
-pytest tests/ --cov=spatial_attention --cov-report=html
+pytest tests/ --cov=spatial_grouping_attention --cov-report=html
 
 # Run specific test file
 pytest tests/test_mlp.py
@@ -103,9 +103,9 @@ The tests aim to provide comprehensive coverage of:
 - Error handling for invalid inputs
 - Edge cases like empty sequences and zero dimensions
 
-### Spatial Attention Classes (`test_spatial_attention.py`)
-- Initialization of base `SpatialAttention` class
-- `SparseSpatialAttention` and `DenseSpatialAttention` subclasses
+### Spatial Attention Classes (`test_spatial_grouping_attention.py`)
+- Initialization of base `SpatialGroupingAttention` class
+- `SparseSpatialGroupingAttention` and `DenseSpatialGroupingAttention` subclasses
 - Parameter validation and shape checking
 - Component creation (linear layers, norms, etc.)
 - String representations

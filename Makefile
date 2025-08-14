@@ -27,7 +27,7 @@ test:
 	pytest tests/
 
 test-cov:
-	pytest tests/ --cov=spatial_attention --cov-report=html --cov-report=term-missing --cov-report=xml
+	pytest tests/ --cov=spatial_grouping_attention --cov-report=html --cov-report=term-missing --cov-report=xml
 
 test-fast:
 	pytest tests/ -x -v
@@ -80,4 +80,4 @@ check-all: lint type-check test-cov
 
 # Version info
 version:
-	python -c "import spatial_attention; print(spatial_attention.__version__)" 2>/dev/null || echo "Package not installed"
+	python -c "import spatial_grouping_attention; print(spatial_grouping_attention.__version__)" 2>/dev/null || echo "Package not installed"
