@@ -1,6 +1,6 @@
-# {{project_name}}
+# spatial-attention
 
-## {{project_description}}
+## PyTorch Implementation of Spatial Grouping Attention Layer
 
 ![PyPI - License](https://img.shields.io/pypi/l/spatial-attention)
 [![CI/CD Pipeline](https://github.com/rhoadesScholar/spatial-attention/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/rhoadesScholar/spatial-attention/actions/workflows/ci-cd.yml)

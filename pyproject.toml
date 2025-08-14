@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "spatial-attention"
 dynamic = ["version"]
-description = "{{project_description}}"
+description = "PyTorch Implementation of Spatial Grouping Attention Layer"
 readme = "README.md"
 license = { text = "BSD 3-Clause License" }
 authors = [
@@ -30,10 +30,12 @@ classifiers = [
 keywords = ["attention", "transformer", "rotary spatial embedding", "segmentation"]
 requires-python = ">=3.10"
 dependencies = [
-    # Add your core dependencies here
-    # "numpy>=1.20.0",
+    # Core dependencies
     "torch",
-    "rotary-spatial-embedding",
+    "rotary-spatial-embeddings",
+    "cmake",  # Required for building NATTEN
+    "ninja",  # Helpful for building with CMake
+    "natten==0.17.5",  # This requires CMake
 ]
 
 [project.optional-dependencies]
@@ -105,6 +107,8 @@ markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
     "unit: marks tests as unit tests",
+    "cuda: marks tests as requiring CUDA",
+    "natten: marks tests as requiring NATTEN library",
 ]
 
 # Coverage configuration

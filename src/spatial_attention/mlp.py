@@ -14,7 +14,7 @@ from typing import Callable, Optional
 from torch import Tensor, nn, jit
 
 
-class Mlp(nn.Module):
+class MLP(nn.Module):
     def __init__(
         self,
         in_features: int,
@@ -36,15 +36,11 @@ class Mlp(nn.Module):
         else:
             self.shortcut = nn.Identity()
 
-    @jit.script
-    def _jitted_forward(self, x: Tensor) -> Tensor:
-        """Jitted forward method for TorchScript compatibility."""
+    def forward(self, x: Tensor) -> Tensor:
+        """Forward pass through the MLP."""
         out = self.fc1(x)
         out = self.act(out)
         out = self.drop(out)
         out = self.fc2(out)
         out = self.drop(out)
         return out + self.shortcut(x)
-
-    def forward(self, x: Tensor) -> Tensor:
-        return self._jitted_forward(x)
