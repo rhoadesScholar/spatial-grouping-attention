@@ -9,10 +9,10 @@ pytest.importorskip("torch", reason="PyTorch is required for integration tests")
 
 try:
     from spatial_attention import (
-        SpatialAttention,
-        SparseSpatialAttention,
-        DenseSpatialAttention,
         MLP,
+        DenseSpatialAttention,
+        SparseSpatialAttention,
+        SpatialAttention,
     )
 
     SPATIAL_ATTENTION_AVAILABLE = True
@@ -330,7 +330,8 @@ class TestDeviceCompatibility:
                 feature_dims=32, spatial_dims=2, num_heads=4, iters=1
             )
 
-            # Test that MLP component can be moved to GPU (since attention classes aren't nn.Module)
+            # Test that MLP component can be moved to GPU
+            # (since attention classes aren't nn.Module)
             mlp_gpu = MLP(in_features=32).cuda()
 
             # Check that MLP parameters are on GPU

@@ -1,6 +1,7 @@
 """Focused tests for utility functions."""
 
 import pytest
+
 from spatial_attention.utils import to_list, to_tuple
 
 

@@ -17,13 +17,13 @@ except PackageNotFoundError:
 __author__ = "Jeff Rhoades"
 __email__ = "rhoadesj@hhmi.org"
 
-from .spatial_attention import (
-    SpatialAttention,
-    SparseSpatialAttention,
-    DenseSpatialAttention,
-)
-from .mlp import MLP
 from . import utils
+from .mlp import MLP
+from .spatial_attention import (
+    DenseSpatialAttention,
+    SparseSpatialAttention,
+    SpatialAttention,
+)
 
 __all__ = [
     "__version__",

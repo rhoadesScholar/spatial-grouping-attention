@@ -3,6 +3,7 @@
 import pytest
 import torch
 import torch.nn as nn
+
 from spatial_attention.mlp import MLP
 
 

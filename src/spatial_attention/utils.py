@@ -10,14 +10,16 @@ def to_list(
         out = [x] * ndim  # type: ignore
     elif isinstance(x, (list, tuple)):
         if len(x) > 0 and isinstance(x[0], (list, tuple)) and len(x[0]) == ndim:
-            assert (
-                allow_nested
-            ), "Nested structures are not allowed, but got a nested list/tuple. If you want to allow nested structures, set allow_nested=True."
-            # If the first element is a list or tuple, we assume it's a nested structure
+            assert allow_nested, (
+                "Nested structures are not allowed, but got a nested list/tuple. "
+                "If you want to allow nested structures, set allow_nested=True."
+            )
+            # If the first element is a list or tuple, we assume it's nested
             # and we need to convert each element to a list
-            assert all(
-                len(el) == ndim for el in x
-            ), f"got nested structure with lengths {[len(el) for el in x]} but expected {ndim} for all elements"
+            assert all(len(el) == ndim for el in x), (
+                f"got nested structure with lengths {[len(el) for el in x]} "
+                f"but expected {ndim} for all elements"
+            )
             out = [list(el) for el in x]
         else:
             if len(x) != ndim:
@@ -25,7 +27,8 @@ def to_list(
             out = list(x)
     else:
         raise TypeError(
-            f"expected int | float, list[int | float], or list[list[int | float]] but got {type(x)}"
+            f"expected int | float, list[int | float], or "
+            f"list[list[int | float]] but got {type(x)}"
         )
     if dtype_caster is not None:
         return sequence_to_dtype(out, dtype_caster)  # type: ignore
@@ -41,14 +44,16 @@ def to_tuple(
         out = (x,) * ndim
     elif isinstance(x, (list, tuple)):
         if len(x) > 0 and isinstance(x[0], (list, tuple)) and len(x[0]) == ndim:
-            assert (
-                allow_nested
-            ), "Nested structures are not allowed, but got a nested list/tuple. If you want to allow nested structures, set allow_nested=True."
-            # If the first element is a list or tuple, we assume it's a nested structure
+            assert allow_nested, (
+                "Nested structures are not allowed, but got a nested list/tuple. "
+                "If you want to allow nested structures, set allow_nested=True."
+            )
+            # If the first element is a list or tuple, we assume it's nested
             # and we need to convert each element to a tuple
-            assert all(
-                len(el) == ndim for el in x
-            ), f"got nested structure with lengths {[len(el) for el in x]} but expected {ndim} for all elements"
+            assert all(len(el) == ndim for el in x), (
+                f"got nested structure with lengths {[len(el) for el in x]} "
+                f"but expected {ndim} for all elements"
+            )
             out = tuple(tuple(el) for el in x)
         else:
             if len(x) != ndim:
@@ -56,7 +61,8 @@ def to_tuple(
             out = tuple(x)
     else:
         raise TypeError(
-            f"expected int | float, list[int | float], or list[list[int | float]] but got {type(x)}"
+            f"expected int | float, list[int | float], or "
+            f"list[list[int | float]] but got {type(x)}"
         )
     if dtype_caster is not None:
         return sequence_to_dtype(out, dtype_caster)  # type: ignore

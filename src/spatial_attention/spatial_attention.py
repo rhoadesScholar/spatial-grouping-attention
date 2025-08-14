@@ -52,7 +52,10 @@ class SpatialAttention:
         )
         # Handle stride conversion (optional parameter)
         if stride is None:
-            self.stride = tuple(max(1, k // 2) for k in self.kernel_size)  # type: ignore
+            # Default stride is half kernel size, minimum 1
+            self.stride = tuple(
+                max(1, k // 2) for k in self.kernel_size  # type: ignore
+            )
         else:
             self.stride = to_tuple(
                 stride, spatial_dims, dtype_caster=int, allow_nested=False
@@ -202,12 +205,12 @@ class SparseSpatialAttention(SpatialAttention):
 
         try:
             from natten.functional import (
-                na1d_qk,
                 na1d_av,
-                na2d_qk,
+                na1d_qk,
                 na2d_av,
-                na3d_qk,
+                na2d_qk,
                 na3d_av,
+                na3d_qk,
             )
         except ImportError:
             raise ImportError(
@@ -239,11 +242,15 @@ class SparseSpatialAttention(SpatialAttention):
     ) -> torch.Tensor:
         """Compute sparse neighborhood attention scores."""
         # Reshape k and q for neighborhood attention
-        q_grid_shape = to_tuple(q_grid_shape, self.spatial_dims, dtype_caster=int, allow_nested=False)  # type: ignore
+        q_grid_shape = to_tuple(
+            q_grid_shape, self.spatial_dims, dtype_caster=int, allow_nested=False
+        )  # type: ignore
         if k_grid_shape is None:
             k_grid_shape = q_grid_shape
         else:
-            k_grid_shape = to_tuple(k_grid_shape, self.spatial_dims, dtype_caster=int, allow_nested=False)  # type: ignore
+            k_grid_shape = to_tuple(
+                k_grid_shape, self.spatial_dims, dtype_caster=int, allow_nested=False
+            )
 
         B, H, _, dims_per_head = k.shape
 

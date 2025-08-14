@@ -7,7 +7,7 @@ This directory contains comprehensive tests for the spatial-attention package.
 The test suite is organized into several files:
 
 - `test_spatial_attention.py` - Main tests for spatial attention classes
-- `test_mlp.py` - Focused tests for the MLP module  
+- `test_mlp.py` - Focused tests for the MLP module
 - `test_utils.py` - Tests for utility functions
 - `test_integration.py` - Integration tests and end-to-end workflows
 - `conftest.py` - Pytest configuration and shared fixtures
@@ -46,7 +46,7 @@ A convenient test runner script is provided:
 # Run unit tests only
 python run_tests.py --unit
 
-# Run integration tests only  
+# Run integration tests only
 python run_tests.py --integration
 
 # Run fast tests only (excludes slow tests)
@@ -71,7 +71,7 @@ python run_tests.py --parallel auto
 # Run only unit tests
 pytest -m "unit"
 
-# Run only integration tests  
+# Run only integration tests
 pytest -m "integration"
 
 # Run only fast tests (exclude slow ones)
@@ -160,17 +160,17 @@ Example test structure:
 ```python
 class TestNewFeature:
     """Test cases for new feature."""
-    
+
     def test_basic_functionality(self):
         """Test basic functionality with default parameters."""
         # Test implementation
         pass
-    
+
     def test_edge_case_handling(self):
         """Test handling of edge cases."""
-        # Test implementation  
+        # Test implementation
         pass
-    
+
     @pytest.mark.slow
     def test_performance_characteristics(self):
         """Test performance with large inputs."""
@@ -198,7 +198,7 @@ Run tests with debugging enabled:
 # Drop into debugger on first failure
 pytest --pdb
 
-# Stop on first failure  
+# Stop on first failure
 pytest -x
 
 # More verbose output

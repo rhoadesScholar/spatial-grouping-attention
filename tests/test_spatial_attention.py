@@ -4,10 +4,10 @@ import pytest
 import torch
 
 from spatial_attention import (
-    SpatialAttention,
-    SparseSpatialAttention,
-    DenseSpatialAttention,
     MLP,
+    DenseSpatialAttention,
+    SparseSpatialAttention,
+    SpatialAttention,
 )
 from spatial_attention.utils import to_list, to_tuple
 
@@ -365,7 +365,9 @@ class TestErrorHandling:
     """Test error handling and edge cases."""
 
     def test_abstract_method_not_implemented(self):
-        """Test that base SpatialAttention raises NotImplementedError for abstract methods."""
+        """
+        Test that base SpatialAttention raises NotImplementedError for abstract methods.
+        """
         attn = SpatialAttention()
 
         with pytest.raises(NotImplementedError):
@@ -452,10 +454,10 @@ def test_package_imports():
     """Test that package imports work correctly."""
     # Test that we can import main classes
     from spatial_attention import (
-        SpatialAttention,
-        SparseSpatialAttention,
-        DenseSpatialAttention,
         MLP,
+        DenseSpatialAttention,
+        SparseSpatialAttention,
+        SpatialAttention,
     )
     from spatial_attention.utils import to_list, to_tuple
 

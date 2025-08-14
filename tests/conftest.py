@@ -2,8 +2,6 @@
 
 import pytest
 import torch
-import warnings
-import gc
 
 
 def pytest_configure(config):
@@ -20,7 +18,10 @@ def pytest_configure(config):
 
 
 def pytest_collection_modifyitems(config, items):
-    """Automatically mark tests based on their location/name and skip tests requiring unavailable dependencies."""
+    """
+    Automatically mark tests based on their location/name and skip tests
+    requiring unavailable dependencies.
+    """
     # Check availability once
     cuda_available = torch.cuda.is_available()
     natten_available = _check_natten_availability()
@@ -58,7 +59,10 @@ def pytest_collection_modifyitems(config, items):
             if not natten_available:
                 item.add_marker(
                     pytest.mark.skip(
-                        reason="Test requires NATTEN with CUDA support (not available in CPU-only environment)"
+                        reason=(
+                            "Test requires NATTEN with CUDA support "
+                            "(not available in CPU-only environment)"
+                        )
                     )
                 )
 
@@ -86,10 +90,10 @@ def _check_natten_availability():
     """Check if NATTEN is available and functional."""
     try:
         # Import natten first
-        import natten
+        import natten  # noqa: F401
 
         # Try to import the functional modules that SparseSpatialAttention uses
-        from natten.functional import na2d_qk, na2d_av
+        from natten.functional import na2d_av, na2d_qk  # noqa: F401
 
         # Try creating small tensors to test CUDA functionality
         import torch
