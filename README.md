@@ -1,4 +1,4 @@
-# spatial-attention
+# spatial-grouping-attention
 
 ## PyTorch Implementation of Spatial Grouping Attention Layer
 
