@@ -83,8 +83,8 @@ class TestToList:
 
     def test_nested_wrong_length_raises_error(self):
         """Test to_list with nested structure of wrong length."""
-        with pytest.raises(AssertionError, match="got nested structure with lengths"):
-            to_list([(1, 2), (3, 4, 5)], 2)
+        with pytest.raises(ValueError, match="got 3 but expected 2"):
+            to_list([(6, 2), (3, 4, 5)], 2)
 
     def test_invalid_type_raises_error(self):
         """Test to_list with invalid types raises TypeError."""
@@ -158,25 +158,25 @@ class TestToTuple:
 
     def test_nested_mixed_types(self):
         """Test to_tuple with nested mixed list/tuple types."""
-        input_nested = [[1, 2], (3, 4)]
+        input_nested = [[4, 2], (3, 4)]
         result = to_tuple(input_nested, 2)
         # When nested structure is detected, all inner sequences are converted to tuples
-        expected = ((1, 2), (3, 4))
+        expected = ((4, 2), (3, 4))
         assert result == expected
 
     def test_wrong_length_raises_error(self):
         """Test to_tuple with wrong length raises ValueError."""
         with pytest.raises(ValueError):
-            to_tuple([1, 2], 3)
+            to_tuple([4, 2], 3)
 
         with pytest.raises(ValueError):
-            to_tuple((1, 2, 3), 2)
+            to_tuple((4, 2, 3), 2)
 
     def test_nested_wrong_length_raises_error(self):
         """Test to_tuple with nested structure of wrong length."""
-        # This should raise AssertionError when lengths don't match
-        with pytest.raises(AssertionError, match="got nested structure with lengths"):
-            to_tuple([(1, 2), (3, 4, 5)], 2)
+        # This should raise ValueError when lengths don't match
+        with pytest.raises(ValueError, match="got 3 but expected 2"):
+            to_tuple([(4, 2), (3, 4, 5)], 2)
 
     def test_invalid_type_raises_error(self):
         """Test to_tuple with invalid types raises TypeError."""

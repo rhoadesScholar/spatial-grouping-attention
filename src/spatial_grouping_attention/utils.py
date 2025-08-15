@@ -16,11 +16,7 @@ def to_list(
             )
             # If the first element is a list or tuple, we assume it's nested
             # and we need to convert each element to a list
-            assert all(len(el) == ndim for el in x), (
-                f"got nested structure with lengths {[len(el) for el in x]} "
-                f"but expected {ndim} for all elements"
-            )
-            out = [list(el) for el in x]
+            out = [to_list(el, ndim, dtype_caster) for el in x]
         else:
             if len(x) != ndim:
                 raise ValueError(f"got {len(x)} but expected {ndim}")
@@ -50,11 +46,7 @@ def to_tuple(
             )
             # If the first element is a list or tuple, we assume it's nested
             # and we need to convert each element to a tuple
-            assert all(len(el) == ndim for el in x), (
-                f"got nested structure with lengths {[len(el) for el in x]} "
-                f"but expected {ndim} for all elements"
-            )
-            out = tuple(tuple(el) for el in x)
+            out = tuple(to_tuple(el, ndim, dtype_caster) for el in x)
         else:
             if len(x) != ndim:
                 raise ValueError(f"got {len(x)} but expected {ndim}")
