@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling", "hatch-vcs", "torch", "cmake", "ninja"]
+requires = ["hatchling", "hatch-vcs", "cmake", "ninja"]
 build-backend = "hatchling.build"
 
 [project]
