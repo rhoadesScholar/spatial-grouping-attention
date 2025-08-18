@@ -65,9 +65,8 @@ class SpatialGroupingAttention(torch.nn.Module):
         self.feature_dims = feature_dims
         self.spatial_dims = spatial_dims
         if spacing is None:
-            self._default_spacing = (1.0,) * spatial_dims
-        else:
-            self._default_spacing = to_tuple(spacing, spatial_dims)
+            spacing = 1.0
+        self._default_spacing = to_tuple(spacing, spatial_dims)
         self.kernel_size = to_tuple(
             kernel_size, spatial_dims, dtype_caster=int, allow_nested=False
         )

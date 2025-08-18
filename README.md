@@ -24,8 +24,8 @@ mamba create -n spatial-attention -y python=3.11 pytorch ninja cmake
 mamba activate spatial-attention
 
 # install the package(s)
-pip install natten==0.17.5 # requires python 3.11
 pip install spatial-grouping-attention
+pip install natten==0.17.5 # requires python 3.11
 ```
 
 ### From source
@@ -67,7 +67,7 @@ input_grid_shape = (32, 32)     # Input resolution
 output = attention(x=x, input_spacing=input_spacing, input_grid_shape=input_grid_shape)
 # Auto-computed: q_spacing = (0.5, 0.5) * 1 = (0.5, 0.5)
 # Auto-computed: q_grid_shape = (32, 32) (no downsampling with stride=1)
-print(f"Output shape: {output['x'].shape}")  # (2, 1024, 128)
+print(f"Output shape: {output['x_out'].shape}")  # (2, 1024, 128)
 ```
 
 ### 2D Attention with Spatial Downsampling
@@ -95,7 +95,7 @@ output_hires = downsampling_attention(
 )
 # Auto-computed: q_spacing = (0.1, 0.1) * 2 = (0.2, 0.2)
 # Auto-computed: q_grid_shape = (128+2*2-5)//2+1 = (64, 64)
-print(f"Downsampled output: {output_hires['x'].shape}")  # (1, 4096, 256)
+print(f"Downsampled output: {output_hires['x_out'].shape}")  # (1, 4096, 256)
 print(f"Compression ratio: {128*128 / (64*64)}x")        # 4x fewer points
 ```
 
@@ -130,7 +130,7 @@ try:
     )
     # Auto-computed: q_spacing = (0.5*1, 0.1*2, 0.1*2) = (0.5, 0.2, 0.2)
     # Auto-computed: q_grid_shape = (16, 32, 32) - downsampled in x,y only
-    print(f"3D sparse output: {output_3d['x'].shape}")  # (1, 16384, 128)
+    print(f"3D sparse output: {output_3d['x_out'].shape}")  # (1, 16384, 128)
 
 except ImportError:
     print("SparseSpatialGroupingAttention requires CUDA and natten package")
@@ -161,7 +161,7 @@ global_output = multiscale_attention(
     input_grid_shape=input_grid_shape
 )
 # Auto-computed: q_spacing = (4.0, 4.0), q_grid_shape = (16, 16)
-print(f"Global context: {global_output['x'].shape}")  # (1, 256, 64)
+print(f"Global context: {global_output['x_out'].shape}")  # (1, 256, 64)
 
 # Fine-scale processing with stride=1
 fine_attention = DenseSpatialGroupingAttention(
@@ -178,7 +178,7 @@ fine_output = fine_attention(
     input_grid_shape=input_grid_shape
 )
 # Auto-computed: q_spacing = (1.0, 1.0), q_grid_shape = (64, 64)
-print(f"Fine details: {fine_output['x'].shape}")      # (1, 4096, 64)
+print(f"Fine details: {fine_output['x_out'].shape}")      # (1, 4096, 64)
 ```
 
 ### Integration with Neural Networks
@@ -227,13 +227,13 @@ class HierarchicalSpatialNet(torch.nn.Module):
             x=x,
             input_spacing=pixel_spacing,
             input_grid_shape=(H, W)
-        )['x']  # (B, H*W/16, 128) - 4x downsampling
+        )['x_out']  # (B, H*W/16, 128) - 4x downsampling
 
         fine_out = self.fine_attention(
             x=x,
             input_spacing=pixel_spacing,
             input_grid_shape=(H, W)
-        )['x']   # (B, H*W/4, 128) - 2x downsampling
+        )['x_out']   # (B, H*W/4, 128) - 2x downsampling
 
         # Upsample coarse to match fine resolution for fusion
         coarse_upsampled = torch.nn.functional.interpolate(
