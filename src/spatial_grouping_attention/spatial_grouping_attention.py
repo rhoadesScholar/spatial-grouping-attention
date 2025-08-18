@@ -249,7 +249,7 @@ class SpatialGroupingAttention(torch.nn.Module):
             # --> (B, H, N_out, N_in)
             attn_k = self.attn(k, q, q_grid_shape, input_grid_shape)
             attn_q = attn_k / (
-                attn_k.sum(dim=1, keepdim=True) + torch.finfo(k.dtype).eps
+                attn_k.sum(dim=-2, keepdim=True) + torch.finfo(k.dtype).eps
             )
 
             v = v.reshape(*k.shape)  # (B, H, N_in, dims_per_head)
@@ -333,7 +333,7 @@ class SparseSpatialGroupingAttention(SpatialGroupingAttention):
             self.neighborhood_dilation,
             is_causal=self.is_causal,
         )  # (B, H, N_q, N_k)
-        attn = torch.softmax(attn, dim=-1)  # Softmax over groups
+        attn = torch.softmax(attn, dim=-1)  # likelihood the query includes the key
 
         return attn
 
@@ -352,5 +352,5 @@ class DenseSpatialGroupingAttention(SpatialGroupingAttention):
         # TODO: Make fused triton softmax(k @ q.T, dim=-1)
         # q: (B, H, N_q, D), k: (B, H, N_k, D) -> attn: (B, H, N_q, N_k)
         attn = torch.einsum("bhqd,bhkd->bhqk", q, k)  # (B, H, N_q, N_k)
-        attn = torch.softmax(attn, dim=-1)  # Softmax over groups
+        attn = torch.softmax(attn, dim=-1)  # likelihood the query includes the key
         return attn
