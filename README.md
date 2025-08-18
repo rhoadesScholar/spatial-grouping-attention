@@ -18,12 +18,13 @@ You will first need to install PyTorch separately, as it is required for buildin
 
 ```bash
 # create a virtual environment
-mamba create -n spatial-attention python=3.12 torch
+mamba create -n spatial-attention -y python=3.11 pytorch ninja cmake
 
 # activate the virtual environment
 mamba activate spatial-attention
 
-# install the package
+# install the package(s)
+pip install natten==0.17.5 # requires python 3.11
 pip install spatial-grouping-attention
 ```
 

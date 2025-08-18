@@ -35,7 +35,7 @@ dependencies = [
     "rotary-spatial-embeddings",
     "cmake",  # Required for building NATTEN
     "ninja",  # Helpful for building with CMake
-    "natten==0.17.5",  # This requires CMake
+    # "natten==0.17.5",  # This requires CMake
 ]
 
 [project.optional-dependencies]
