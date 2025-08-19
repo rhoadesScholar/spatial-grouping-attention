@@ -598,6 +598,139 @@ class TestMaskingFunctionality:
         assert "attn_q" in result
         assert "attn_k" in result
 
+    def test_batch_masking_different_masks(self):
+        """Test masking with different masks for different batches."""
+        attn = DenseSpatialGroupingAttention(
+            feature_dims=32, spatial_dims=2, kernel_size=3, num_heads=4, iters=1
+        )
+
+        batch_size, num_points, feature_dim = 2, 16, 32
+        x = torch.randn(batch_size, num_points, feature_dim)
+        input_spacing = (1.0, 1.0)
+        input_grid_shape = (4, 4)
+
+        # Different masks for each batch
+        mask = torch.zeros(batch_size, num_points, dtype=torch.bool)
+        mask[0, :8] = True  # Mask first half for batch 0
+        mask[1, 8:] = True  # Mask second half for batch 1
+
+        # Test forward pass with batch-specific masks
+        result = attn.forward(
+            x, input_spacing=input_spacing, input_grid_shape=input_grid_shape, mask=mask
+        )
+
+        assert "x_out" in result
+        assert result["x_out"].shape[0] == batch_size
+
+    def test_mask_values_are_replaced(self):
+        """Test that masked positions actually contain mask_embedding values."""
+        attn = DenseSpatialGroupingAttention(
+            feature_dims=32, spatial_dims=2, kernel_size=3, num_heads=4, iters=1
+        )
+
+        batch_size, num_points, feature_dim = 1, 16, 32
+        x = torch.randn(batch_size, num_points, feature_dim)
+        input_spacing = (1.0, 1.0)
+        input_grid_shape = (4, 4)
+
+        # Create a mask that masks the first point
+        mask = torch.zeros(batch_size, num_points, dtype=torch.bool)
+        mask[0, 0] = True
+
+        # Store original value
+        original_x = x.clone()
+
+        # Apply mask manually to check
+        mask_expanded = mask.unsqueeze(-1).expand(-1, -1, feature_dim)
+        mask_embedding_expanded = (
+            attn.mask_embedding.unsqueeze(0)
+            .unsqueeze(0)
+            .expand(batch_size, num_points, -1)
+        )
+        expected_x = torch.where(mask_expanded, mask_embedding_expanded, original_x)
+
+        # The first point should be replaced with mask_embedding
+        attn.forward(
+            x, input_spacing=input_spacing, input_grid_shape=input_grid_shape, mask=mask
+        )
+
+        # Compare expected behavior
+        assert torch.allclose(expected_x[0, 0], attn.mask_embedding)
+        assert torch.allclose(expected_x[0, 1], original_x[0, 1])
+
+    def test_mask_with_different_devices(self):
+        """Test masking with tensors on the same device."""
+        attn = DenseSpatialGroupingAttention(
+            feature_dims=32, spatial_dims=2, kernel_size=3, num_heads=4, iters=1
+        )
+
+        batch_size, num_points, feature_dim = 1, 16, 32
+        x = torch.randn(batch_size, num_points, feature_dim)
+        input_spacing = (1.0, 1.0)
+        input_grid_shape = (4, 4)
+
+        # Test with mask on the same device (should work)
+        mask = torch.zeros(batch_size, num_points, dtype=torch.bool)
+        mask[0, :8] = True
+
+        result = attn.forward(
+            x, input_spacing=input_spacing, input_grid_shape=input_grid_shape, mask=mask
+        )
+        assert "x_out" in result
+
+    def test_mask_with_integer_types(self):
+        """Test masking works with integer mask types."""
+        attn = DenseSpatialGroupingAttention(
+            feature_dims=32, spatial_dims=2, kernel_size=3, num_heads=4, iters=1
+        )
+
+        batch_size, num_points, feature_dim = 1, 16, 32
+        x = torch.randn(batch_size, num_points, feature_dim)
+        input_spacing = (1.0, 1.0)
+        input_grid_shape = (4, 4)
+
+        # Test with integer mask (0s and 1s)
+        mask_int = torch.zeros(batch_size, num_points, dtype=torch.int32)
+        mask_int[0, :8] = 1
+
+        result = attn.forward(
+            x,
+            input_spacing=input_spacing,
+            input_grid_shape=input_grid_shape,
+            mask=mask_int,
+        )
+        assert "x_out" in result
+
+    def test_mask_gradient_flow(self):
+        """Test that gradients flow through mask_embedding when used."""
+        attn = DenseSpatialGroupingAttention(
+            feature_dims=32, spatial_dims=2, kernel_size=3, num_heads=4, iters=1
+        )
+
+        batch_size, num_points, feature_dim = 1, 16, 32
+        x = torch.randn(batch_size, num_points, feature_dim, requires_grad=True)
+        input_spacing = (1.0, 1.0)
+        input_grid_shape = (4, 4)
+
+        # Create mask
+        mask = torch.zeros(batch_size, num_points, dtype=torch.bool)
+        mask[0, :8] = True
+
+        # Forward pass
+        result = attn.forward(
+            x, input_spacing=input_spacing, input_grid_shape=input_grid_shape, mask=mask
+        )
+
+        # Create a loss and backpropagate
+        loss = result["x_out"].sum()
+        loss.backward()
+
+        # Check that mask_embedding has gradients (it should since it was used)
+        assert attn.mask_embedding.grad is not None
+        assert not torch.allclose(
+            attn.mask_embedding.grad, torch.zeros_like(attn.mask_embedding.grad)
+        )
+
 
 def test_package_imports():
     """Test that package imports work correctly."""

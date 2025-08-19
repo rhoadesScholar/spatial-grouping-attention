@@ -226,11 +226,13 @@ class SpatialGroupingAttention(torch.nn.Module):
         B, N_in, D = x.shape
         if mask is not None:
             # Ensure mask is boolean and on the same device
-            mask = mask.to(x.device) > 0
+            mask = mask.to(x.device) > 0  # [B, *spatial_dims]
 
             # Apply boolean mask
             x = torch.where(
-                mask.unsqueeze(-1), self.mask_embedding.expand(*x.shape[:2], -1), x
+                mask.flatten(1).unsqueeze(-1),
+                self.mask_embedding.expand(B, N_in, D),
+                x,
             )
 
         x_out = self.strider(
