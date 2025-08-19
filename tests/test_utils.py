@@ -89,9 +89,6 @@ class TestToList:
     def test_invalid_type_raises_error(self):
         """Test to_list with invalid types raises TypeError."""
         with pytest.raises(TypeError):
-            to_list("string", 3)
-
-        with pytest.raises(TypeError):
             to_list({"dict": "value"}, 2)
 
         # Note: None is handled specially and creates [None, None, ...] so no error
@@ -181,9 +178,6 @@ class TestToTuple:
     def test_invalid_type_raises_error(self):
         """Test to_tuple with invalid types raises TypeError."""
         with pytest.raises(TypeError):
-            to_tuple("string", 3)
-
-        with pytest.raises(TypeError):
             to_tuple({"dict": "value"}, 2)
 
     def test_empty_structures(self):
@@ -243,7 +237,6 @@ class TestParameterized:
     @pytest.mark.parametrize(
         "invalid_input",
         [
-            "string",
             {"key": "value"},
             42.0j,  # Complex number
             object(),

@@ -1,6 +1,6 @@
 from abc import abstractmethod
 import math
-from typing import Optional, Sequence, Tuple, Type
+from typing import Any, Optional, Sequence, Tuple, Type
 
 from RoSE import RotarySpatialEmbedding
 import torch
@@ -207,7 +207,7 @@ class SpatialGroupingAttention(torch.nn.Module):
         input_spacing: Tuple[float, ...],
         input_grid_shape: Tuple[int, ...],
         mask: Optional[torch.Tensor] = None,
-    ) -> dict[str, torch.Tensor]:
+    ) -> dict[str, Any]:
         """Forward pass with automatic query grid calculation.
 
         Args:
@@ -265,6 +265,8 @@ class SpatialGroupingAttention(torch.nn.Module):
             "x_out": x_out,
             "attn_q": attn_q,
             "attn_k": attn_k,
+            "out_grid_shape": q_grid_shape,
+            "out_spacing": q_spacing,
         }
 
     def __repr__(self) -> str:
@@ -358,3 +360,28 @@ class DenseSpatialGroupingAttention(SpatialGroupingAttention):
         attn = torch.einsum("bhqd,bhkd->bhqk", q, k)  # (B, H, N_q, N_k)
         attn = torch.softmax(attn, dim=-1)  # likelihood the query includes the key
         return attn
+
+
+class DeformableSpatialGroupingAttention(SpatialGroupingAttention):
+    """Deformable version of SpatialGroupingAttention."""
+
+    # TODO: Implement deformable attention mechanism
+    def __init__(
+        self,
+        *args,
+        deformable_groups: int = 1,
+        **kwargs,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self.deformable_groups = deformable_groups
+
+    def attn(
+        self,
+        k: torch.Tensor,  # (B, H, N_k, D)
+        q: torch.Tensor,  # (B, H, N_q, D)
+        q_grid_shape: int | Tuple[int, ...],
+        input_grid_shape: int | Tuple[int, ...],
+    ) -> torch.Tensor:
+        """Compute deformable attention scores."""
+        # TODO: Implement deformable attention mechanism
+        ...
