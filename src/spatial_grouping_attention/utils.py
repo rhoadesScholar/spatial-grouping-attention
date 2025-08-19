@@ -6,7 +6,7 @@ def to_list(
 ) -> list[int | float | None] | list[list[int | float | None]]:
     if x is None:
         out = [None] * ndim  # type: ignore
-    elif isinstance(x, (int, float)):
+    elif isinstance(x, (int, float, str)):
         out = [x] * ndim  # type: ignore
     elif isinstance(x, (list, tuple)):
         if len(x) > 0 and isinstance(x[0], (list, tuple)) and len(x[0]) == ndim:
@@ -36,7 +36,7 @@ def to_tuple(
 ) -> tuple[int | float | None, ...] | tuple[tuple[int | float | None, ...], ...]:
     if x is None:
         out = (None,) * ndim
-    elif isinstance(x, (int, float)):
+    elif isinstance(x, (int, float, str)):
         out = (x,) * ndim
     elif isinstance(x, (list, tuple)):
         if len(x) > 0 and isinstance(x[0], (list, tuple)) and len(x[0]) == ndim:
