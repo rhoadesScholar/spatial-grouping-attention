@@ -134,7 +134,7 @@ class SpatialGroupingAttention(torch.nn.Module):
         self.norm2 = torch.nn.LayerNorm(feature_dims)
         self.norm3 = torch.nn.LayerNorm(feature_dims)
         self.mask_embedding = torch.nn.Parameter(
-            torch.zeros((1, feature_dims)), requires_grad=True
+            torch.rand(feature_dims), requires_grad=True
         )
 
     def _calculate_strided_grid_shape(
@@ -224,6 +224,15 @@ class SpatialGroupingAttention(torch.nn.Module):
         q_grid_shape = self._calculate_strided_grid_shape(input_grid_shape)
 
         B, N_in, D = x.shape
+        if mask is not None:
+            # Ensure mask is boolean and on the same device
+            mask = mask.to(x.device) > 0
+
+            # Apply boolean mask
+            x = torch.where(
+                mask.unsqueeze(-1), self.mask_embedding.expand(*x.shape[:2], -1), x
+            )
+
         x_out = self.strider(
             x.transpose(1, 2).reshape(B, D, *input_grid_shape)
         )  # (B, D, *input_grid_shape)
@@ -240,11 +249,6 @@ class SpatialGroupingAttention(torch.nn.Module):
             # --> (B, H, N, dims_per_head)
             k = self.temp * self.k_pe(k, input_spacing, input_grid_shape, flatten=False)
             q = self.q_pe(self.q(x_out), q_spacing, q_grid_shape, flatten=False)
-            if mask is not None:
-                raise NotImplementedError(
-                    "Masking is not implemented in the base "
-                    "SpatialGroupingAttention class."
-                )
 
             # --> (B, H, N_out, N_in)
             attn_k = self.attn(k, q, q_grid_shape, input_grid_shape)

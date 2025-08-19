@@ -87,7 +87,7 @@ class TestSpatialGroupingAttentionBase:
 
         # Check mask embedding
         assert hasattr(attn, "mask_embedding")
-        assert attn.mask_embedding.shape == (1, 128)
+        assert attn.mask_embedding.shape == (128,)
 
 
 @pytest.mark.natten
@@ -145,6 +145,28 @@ class TestSparseSpatialGroupingAttention:
         assert hasattr(attn_3d, "_qk_attn")
         assert hasattr(attn_3d, "_av_attn")
 
+    def test_masking_functionality(self, natten_available):
+        """Test that masking works correctly."""
+        if not natten_available:
+            pytest.skip(
+                "SparseSpatialGroupingAttention requires NATTEN with CUDA support"
+            )
+
+        attn = SparseSpatialGroupingAttention(feature_dims=64, spatial_dims=2)
+        x = torch.randn(1, 16, 64)
+        mask = torch.zeros(1, 16, dtype=torch.bool)
+        mask[0, :8] = True  # Mask first half of the input
+
+        # Test that masking doesn't crash
+        result = attn.forward(
+            x, input_spacing=(1.0, 1.0), input_grid_shape=(4, 4), mask=mask
+        )
+
+        # Ensure the result has the expected keys
+        assert "x_out" in result
+        assert "attn_q" in result
+        assert "attn_k" in result
+
 
 class TestDenseSpatialGroupingAttention:
     """Test cases for DenseSpatialGroupingAttention class."""
@@ -178,6 +200,23 @@ class TestDenseSpatialGroupingAttention:
             k, q, input_grid_shape=(shape, shape), q_grid_shape=(shape // 2, shape // 2)
         )
         assert result.shape == (batch_size, num_heads, seq_len_q, seq_len_k)
+
+    def test_masking_functionality(self):
+        """Test that masking works correctly."""
+        attn = DenseSpatialGroupingAttention(feature_dims=64, spatial_dims=2)
+        x = torch.randn(1, 16, 64)
+        mask = torch.zeros(1, 16, dtype=torch.bool)
+        mask[0, :8] = True  # Mask first half of the input
+
+        # Test that masking doesn't crash
+        result = attn.forward(
+            x, input_spacing=(1.0, 1.0), input_grid_shape=(4, 4), mask=mask
+        )
+
+        # Ensure the result has the expected keys
+        assert "x_out" in result
+        assert "attn_q" in result
+        assert "attn_k" in result
 
 
 # Fixtures for reusable test data
@@ -283,22 +322,6 @@ class TestErrorHandling:
             q = torch.randn(1, num_heads, q_h * q_w, feature_dims)
             attn.attn(k, q, q_grid_shape=(q_h, q_w), input_grid_shape=(h, w))
 
-    def test_mask_not_implemented_error(self, natten_available):
-        """Test that masking raises NotImplementedError in base class."""
-        if not natten_available:
-            pytest.skip(
-                "SparseSpatialGroupingAttention requires NATTEN with CUDA support"
-            )
-
-        attn = SparseSpatialGroupingAttention(feature_dims=64, spatial_dims=2)
-        x = torch.randn(1, 16, 64)
-        mask = torch.ones(1, 16)
-
-        with pytest.raises(NotImplementedError, match="Masking is not implemented"):
-            attn.forward(
-                x, input_spacing=(1.0, 1.0), input_grid_shape=(4, 4), mask=mask
-            )
-
 
 @pytest.mark.integration
 class TestIntegration:
@@ -365,6 +388,215 @@ class TestIntegration:
 
         except ImportError as e:
             pytest.skip(f"Skipping integration test due to missing dependencies: {e}")
+
+
+class TestMaskingFunctionality:
+    """Test cases for masking functionality in spatial attention modules."""
+
+    def test_mask_embedding_initialization(self):
+        """Test that mask embedding is properly initialized."""
+        feature_dims = 64
+        attn = DenseSpatialGroupingAttention(feature_dims=feature_dims, spatial_dims=2)
+
+        # Check mask embedding exists and has correct shape
+        assert hasattr(attn, "mask_embedding")
+        assert isinstance(attn.mask_embedding, torch.nn.Parameter)
+        assert attn.mask_embedding.shape == (
+            feature_dims,
+        )  # 1D tensor with feature_dims
+        assert attn.mask_embedding.requires_grad
+
+    def test_masking_with_dense_attention_2d(self):
+        """Test masking functionality with DenseSpatialGroupingAttention in 2D."""
+        attn = DenseSpatialGroupingAttention(
+            feature_dims=32, spatial_dims=2, kernel_size=3, num_heads=4, iters=1
+        )
+
+        # Create input data
+        batch_size, num_points, feature_dim = 1, 16, 32
+        x = torch.randn(batch_size, num_points, feature_dim)
+        input_spacing = (1.0, 1.0)
+        input_grid_shape = (4, 4)
+
+        # Create mask (mask first half of points)
+        mask = torch.zeros(batch_size, num_points, dtype=torch.bool)
+        mask[0, :8] = True
+
+        # Test forward pass with mask
+        result = attn.forward(
+            x, input_spacing=input_spacing, input_grid_shape=input_grid_shape, mask=mask
+        )
+
+        # Verify output structure
+        assert "x_out" in result
+        assert "attn_q" in result
+        assert "attn_k" in result
+        assert result["x_out"].shape[0] == batch_size
+        assert result["x_out"].shape[-1] == feature_dim
+
+    def test_masking_with_dense_attention_3d(self):
+        """Test masking functionality with DenseSpatialGroupingAttention in 3D."""
+        attn = DenseSpatialGroupingAttention(
+            feature_dims=32, spatial_dims=3, kernel_size=3, num_heads=4, iters=1
+        )
+
+        # Create input data
+        batch_size, num_points, feature_dim = 1, 27, 32  # 3x3x3 grid
+        x = torch.randn(batch_size, num_points, feature_dim)
+        input_spacing = (1.0, 1.0, 1.0)
+        input_grid_shape = (3, 3, 3)
+
+        # Create mask (mask random points)
+        mask = torch.zeros(batch_size, num_points, dtype=torch.bool)
+        mask[0, [0, 5, 10, 15, 20]] = True  # Mask some points
+
+        # Test forward pass with mask
+        result = attn.forward(
+            x, input_spacing=input_spacing, input_grid_shape=input_grid_shape, mask=mask
+        )
+
+        # Verify output structure
+        assert "x_out" in result
+        assert "attn_q" in result
+        assert "attn_k" in result
+
+    def test_masking_with_sparse_attention(self, natten_available):
+        """Test masking functionality with SparseSpatialGroupingAttention."""
+        if not natten_available:
+            pytest.skip(
+                "SparseSpatialGroupingAttention requires NATTEN with CUDA support"
+            )
+
+        attn = SparseSpatialGroupingAttention(
+            feature_dims=32, spatial_dims=2, kernel_size=3, num_heads=4, iters=1
+        )
+
+        # Create input data
+        batch_size, num_points, feature_dim = 1, 16, 32
+        x = torch.randn(batch_size, num_points, feature_dim)
+        input_spacing = (1.0, 1.0)
+        input_grid_shape = (4, 4)
+
+        # Create mask
+        mask = torch.zeros(batch_size, num_points, dtype=torch.bool)
+        mask[0, ::2] = True  # Mask every other point
+
+        # Test forward pass with mask
+        result = attn.forward(
+            x, input_spacing=input_spacing, input_grid_shape=input_grid_shape, mask=mask
+        )
+
+        # Verify output structure
+        assert "x_out" in result
+        assert "attn_q" in result
+        assert "attn_k" in result
+
+    def test_mask_effect_on_input(self):
+        """Test that mask actually affects the input tensor."""
+        attn = DenseSpatialGroupingAttention(
+            feature_dims=32, spatial_dims=2, kernel_size=3, num_heads=4, iters=1
+        )
+
+        # Create reproducible input data
+        torch.manual_seed(42)
+        batch_size, num_points, feature_dim = 1, 16, 32
+        x = torch.randn(batch_size, num_points, feature_dim)
+        input_spacing = (1.0, 1.0)
+        input_grid_shape = (4, 4)
+
+        # Test without mask
+        result_no_mask = attn.forward(
+            x.clone(), input_spacing=input_spacing, input_grid_shape=input_grid_shape
+        )
+
+        # Test with mask
+        mask = torch.zeros(batch_size, num_points, dtype=torch.bool)
+        mask[0, :8] = True  # Mask first half
+
+        result_with_mask = attn.forward(
+            x.clone(),
+            input_spacing=input_spacing,
+            input_grid_shape=input_grid_shape,
+            mask=mask,
+        )
+
+        # Results should be different when mask is applied
+        assert not torch.allclose(result_no_mask["x_out"], result_with_mask["x_out"])
+        assert not torch.allclose(result_no_mask["attn_q"], result_with_mask["attn_q"])
+
+    def test_mask_tensor_validation(self):
+        """Test that mask tensor has the correct shape and type requirements."""
+        attn = DenseSpatialGroupingAttention(
+            feature_dims=32, spatial_dims=2, kernel_size=3, num_heads=4, iters=1
+        )
+
+        batch_size, num_points, feature_dim = 1, 16, 32
+        x = torch.randn(batch_size, num_points, feature_dim)
+        input_spacing = (1.0, 1.0)
+        input_grid_shape = (4, 4)
+
+        # Test with float mask (should work as boolean)
+        mask_float = torch.zeros(batch_size, num_points)
+        mask_float[0, :8] = 1.0
+
+        result = attn.forward(
+            x,
+            input_spacing=input_spacing,
+            input_grid_shape=input_grid_shape,
+            mask=mask_float,
+        )
+        assert "x_out" in result
+
+    def test_empty_mask(self):
+        """Test behavior with an all-False mask (no masking)."""
+        attn = DenseSpatialGroupingAttention(
+            feature_dims=32, spatial_dims=2, kernel_size=3, num_heads=4, iters=1
+        )
+
+        batch_size, num_points, feature_dim = 1, 16, 32
+        x = torch.randn(batch_size, num_points, feature_dim)
+        input_spacing = (1.0, 1.0)
+        input_grid_shape = (4, 4)
+
+        # All-False mask should behave like no mask
+        mask = torch.zeros(batch_size, num_points, dtype=torch.bool)
+
+        result_with_empty_mask = attn.forward(
+            x.clone(),
+            input_spacing=input_spacing,
+            input_grid_shape=input_grid_shape,
+            mask=mask,
+        )
+
+        result_no_mask = attn.forward(
+            x.clone(), input_spacing=input_spacing, input_grid_shape=input_grid_shape
+        )
+
+        # Results should be identical
+        assert torch.allclose(result_no_mask["x_out"], result_with_empty_mask["x_out"])
+
+    def test_full_mask(self):
+        """Test behavior with an all-True mask (everything masked)."""
+        attn = DenseSpatialGroupingAttention(
+            feature_dims=32, spatial_dims=2, kernel_size=3, num_heads=4, iters=1
+        )
+
+        batch_size, num_points, feature_dim = 1, 16, 32
+        x = torch.randn(batch_size, num_points, feature_dim)
+        input_spacing = (1.0, 1.0)
+        input_grid_shape = (4, 4)
+
+        # All-True mask
+        mask = torch.ones(batch_size, num_points, dtype=torch.bool)
+
+        # Should not crash even with everything masked
+        result = attn.forward(
+            x, input_spacing=input_spacing, input_grid_shape=input_grid_shape, mask=mask
+        )
+
+        assert "x_out" in result
+        assert "attn_q" in result
+        assert "attn_k" in result
 
 
 def test_package_imports():
