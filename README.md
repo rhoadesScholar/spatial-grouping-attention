@@ -2,7 +2,7 @@
 
 ## PyTorch Implementation of Spatial Grouping Attention
 
-![PyPI - License](https://img.shields.io/pypi/l/spatial-grouping-attention)
+![PyPI - License](https://img.shields.io/github/license/rhoadesScholar/spatial-grouping-attention)
 [![CI/CD Pipeline](https://github.com/rhoadesScholar/spatial-grouping-attention/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/rhoadesScholar/spatial-grouping-attention/actions/workflows/ci-cd.yml)
 [![codecov](https://codecov.io/github/rhoadesScholar/spatial-grouping-attention/graph/badge.svg)](https://codecov.io/github/rhoadesScholar/spatial-grouping-attention)
 ![PyPI - Version](https://img.shields.io/pypi/v/spatial-grouping-attention)
