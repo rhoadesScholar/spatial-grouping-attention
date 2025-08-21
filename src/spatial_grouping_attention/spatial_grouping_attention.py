@@ -32,6 +32,9 @@ class SpatialGroupingAttention(torch.nn.Module):
                         (default is True)
         init_jitter_std: Standard deviation for initial jitter in the rotary
                          embeddings (default is 0.02)
+        rotary_ratio: Fraction of the feature dimension to rotate
+        frequency_scaling: Frequency scaling method for the rotary position embedding
+                        (default is "sqrt")
         spacing: Default real-world pixel spacing for the input data
                  (default is None, which uses a default spacing of 1.0 for
                  all dimensions). Can be specified at initialization or passed
@@ -54,6 +57,8 @@ class SpatialGroupingAttention(torch.nn.Module):
         base_theta: float = 1e4,
         learnable_rose: bool = True,
         init_jitter_std: float = 0.02,
+        rotary_ratio: float = 0.5,
+        frequency_scaling: str = "sqrt",
         spacing: Optional[float | Sequence[float]] = None,
     ) -> None:
         super().__init__()
@@ -64,6 +69,8 @@ class SpatialGroupingAttention(torch.nn.Module):
         }[spatial_dims]
         self.feature_dims = feature_dims
         self.spatial_dims = spatial_dims
+        self.rotary_ratio = rotary_ratio
+        self.frequency_scaling = frequency_scaling
         if spacing is None:
             spacing = 1.0
         self._default_spacing = to_tuple(spacing, spatial_dims)
@@ -120,16 +127,16 @@ class SpatialGroupingAttention(torch.nn.Module):
         self.num_heads = num_heads
         self.base_theta = base_theta
         self.learnable_rose = learnable_rose
-        pe_kwargs = {
-            "dim": feature_dims,
-            "num_heads": self.num_heads,
-            "spatial_dims": spatial_dims,
-            "base_theta": base_theta,
-            "learnable": learnable_rose,
-            "init_jitter_std": init_jitter_std,
-        }
-        self.q_pe = RotarySpatialEmbedding(**pe_kwargs)
-        self.k_pe = RotarySpatialEmbedding(**pe_kwargs)
+        self.rose = RotarySpatialEmbedding(
+            dim=feature_dims,
+            num_heads=self.num_heads,
+            spatial_dims=spatial_dims,
+            base_theta=base_theta,
+            learnable=learnable_rose,
+            init_jitter_std=init_jitter_std,
+            rotary_ratio=rotary_ratio,
+            frequency_scaling=frequency_scaling,
+        )
         self.norm1 = torch.nn.LayerNorm(feature_dims)
         self.norm2 = torch.nn.LayerNorm(feature_dims)
         self.norm3 = torch.nn.LayerNorm(feature_dims)
@@ -249,8 +256,8 @@ class SpatialGroupingAttention(torch.nn.Module):
             k, v = self.kv(x).chunk(2, dim=-1)  # (B, N_in, D), (B, N_in, D)
 
             # --> (B, H, N, dims_per_head)
-            k = self.temp * self.k_pe(k, input_spacing, input_grid_shape, flatten=False)
-            q = self.q_pe(self.q(x_out), q_spacing, q_grid_shape, flatten=False)
+            k = self.temp * self.rose(k, input_spacing, input_grid_shape, flatten=False)
+            q = self.rose(self.q(x_out), q_spacing, q_grid_shape, flatten=False)
 
             # --> (B, H, N_out, N_in)
             attn_k = self.attn(k, q, q_grid_shape, input_grid_shape)
