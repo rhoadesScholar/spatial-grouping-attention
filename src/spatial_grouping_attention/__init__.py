@@ -18,7 +18,6 @@ __author__ = "Jeff Rhoades"
 __email__ = "rhoadesj@hhmi.org"
 
 from . import utils
-from .mlp import MLP
 from .spatial_grouping_attention import (
     DenseSpatialGroupingAttention,
     SparseSpatialGroupingAttention,
@@ -32,6 +31,5 @@ __all__ = [
     "SpatialGroupingAttention",
     "SparseSpatialGroupingAttention",
     "DenseSpatialGroupingAttention",
-    "MLP",
     "utils",
 ]

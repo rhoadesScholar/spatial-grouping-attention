@@ -33,6 +33,7 @@ dependencies = [
     # Core dependencies
     "torch[opt-einsum]",
     "rotary-spatial-embeddings",
+    "timm",
     "cmake",  # Required for building NATTEN
     "ninja",  # Helpful for building with CMake
     # "natten==0.17.5",  # This requires CMake

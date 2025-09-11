@@ -3,9 +3,9 @@ import math
 from typing import Any, Optional, Sequence, Tuple, Type
 
 from RoSE import RotarySpatialEmbedding
+from timm.models.layers import Mlp
 import torch
 
-from .mlp import MLP
 from .utils import to_tuple
 
 
@@ -113,11 +113,11 @@ class SpatialGroupingAttention(torch.nn.Module):
         self.mlp_activation = mlp_activation
         self.mlp_dropout = mlp_dropout
         self.mlp_bias = mlp_bias
-        self.mlp = MLP(
+        self.mlp = Mlp(
             in_features=feature_dims,
             hidden_features=int(feature_dims * mlp_ratio),
             out_features=feature_dims,
-            act_layer=mlp_activation,
+            act_layer=mlp_activation,  # type: ignore
             drop=mlp_dropout,
             bias=mlp_bias,
         )
@@ -128,7 +128,7 @@ class SpatialGroupingAttention(torch.nn.Module):
         self.base_theta = base_theta
         self.learnable_rose = learnable_rose
         self.rose = RotarySpatialEmbedding(
-            dim=feature_dims,
+            feature_dims=feature_dims,
             num_heads=self.num_heads,
             spatial_dims=spatial_dims,
             base_theta=base_theta,
@@ -256,8 +256,12 @@ class SpatialGroupingAttention(torch.nn.Module):
             k, v = self.kv(x).chunk(2, dim=-1)  # (B, N_in, D), (B, N_in, D)
 
             # --> (B, H, N, dims_per_head)
-            k = self.temp * self.rose(k, input_spacing, input_grid_shape, flatten=False)
-            q = self.rose(self.q(x_out), q_spacing, q_grid_shape, flatten=False)
+            k = self.temp * self.rose(
+                k, input_spacing, input_grid_shape, flatten=False
+            ).transpose(1, 2)
+            q = self.rose(
+                self.q(x_out), q_spacing, q_grid_shape, flatten=False
+            ).transpose(1, 2)
 
             # --> (B, H, N_out, N_in)
             attn_k = self.attn(k, q, q_grid_shape, input_grid_shape)
@@ -280,7 +284,7 @@ class SpatialGroupingAttention(torch.nn.Module):
 
     def __repr__(self) -> str:
         """Return string representation of the object."""
-        return f"SpatialGroupingAttention{self.spatial_dims}D"
+        return f"{self.__class__.__name__}{self.spatial_dims}D"
 
 
 class SparseSpatialGroupingAttention(SpatialGroupingAttention):
@@ -382,6 +386,9 @@ class DeformableSpatialGroupingAttention(SpatialGroupingAttention):
         **kwargs,
     ) -> None:
         super().__init__(*args, **kwargs)
+        raise NotImplementedError(
+            "DeformableSpatialGroupingAttention is not yet implemented."
+        )
         self.deformable_groups = deformable_groups
 
     def attn(
