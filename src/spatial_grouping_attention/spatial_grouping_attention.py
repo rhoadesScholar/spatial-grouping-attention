@@ -3,7 +3,7 @@ import math
 from typing import Any, Optional, Sequence, Tuple, Type
 
 from RoSE import RotarySpatialEmbedding
-from timm.models.layers import Mlp
+from timm.layers import Mlp
 import torch
 
 from .utils import to_tuple

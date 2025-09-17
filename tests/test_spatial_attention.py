@@ -1,7 +1,7 @@
 """Test suite for spatial_grouping_attention."""
 
 import pytest
-from timm.models.layers import Mlp
+from timm.layers import Mlp
 import torch
 
 from spatial_grouping_attention import (
