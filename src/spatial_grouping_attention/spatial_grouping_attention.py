@@ -35,6 +35,10 @@ class SpatialGroupingAttention(torch.nn.Module):
         rotary_ratio: Fraction of the feature dimension to rotate
         frequency_scaling: Frequency scaling method for the rotary position embedding
                         (default is "sqrt")
+        learnable_rose_scaling: Whether to use learnable scaling in the rotary
+                                embeddings (default is True)
+        rose_log_scaling: Whether to use logarithmic scaling in the rotary embeddings
+                          (default is True)
         spacing: Default real-world pixel spacing for the input data
                  (default is None, which uses a default spacing of 1.0 for
                  all dimensions). Can be specified at initialization or passed
@@ -59,6 +63,8 @@ class SpatialGroupingAttention(torch.nn.Module):
         init_jitter_std: float = 0.02,
         rotary_ratio: float = 0.5,
         frequency_scaling: str = "sqrt",
+        learnable_rose_scaling: bool = True,
+        rose_log_scaling: bool = True,
         spacing: Optional[float | Sequence[float]] = None,
     ) -> None:
         super().__init__()
@@ -136,6 +142,8 @@ class SpatialGroupingAttention(torch.nn.Module):
             init_jitter_std=init_jitter_std,
             rotary_ratio=rotary_ratio,
             frequency_scaling=frequency_scaling,
+            learnable_scale=learnable_rose_scaling,
+            log_scale=rose_log_scaling,
         )
         self.norm1 = torch.nn.LayerNorm(feature_dims)
         self.norm2 = torch.nn.LayerNorm(feature_dims)
