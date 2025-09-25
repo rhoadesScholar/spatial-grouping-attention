@@ -32,7 +32,7 @@ requires-python = ">=3.10"
 dependencies = [
     # Core dependencies
     "torch[opt-einsum]",
-    "rotary-spatial-embeddings",
+    "rotary-spatial-embeddings>=2025.9.25.1502",
     "timm",
     "cmake",  # Required for building NATTEN
     "ninja",  # Helpful for building with CMake
